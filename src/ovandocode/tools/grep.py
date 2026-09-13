@@ -9,6 +9,8 @@ from ovandocode.tools.base import BaseTool, ToolError, ToolResult
 
 IGNORE_DIRS = {".git", ".venv", "__pycache__", ".pytest_cache", "node_modules",
                ".ruff_cache", ".mypy_cache", ".idea", ".vscode", "dist", "build"}
+IGNORE_FILES = {"uv.lock", "poetry.lock", "package-lock.json", "yarn.lock"}
+IGNORE_GLOBS = {"_fase*.ps1", "_fix_*.ps1"}
 BINARY_EXT = {".png", ".jpg", ".jpeg", ".gif", ".ico", ".pdf", ".zip", ".tar",
               ".gz", ".7z", ".exe", ".dll", ".so", ".pyc", ".woff", ".woff2"}
 MAX_MATCHES = 300
@@ -50,11 +52,19 @@ class GrepTool(BaseTool):
             raise ToolError(f"Regex invalida: {e}") from None
 
         base_path = self._resolve(base, must_exist=True)
+        def _skip(fp: Path) -> bool:
+            if any(part in IGNORE_DIRS for part in fp.parts):
+                return True
+            if fp.name in IGNORE_FILES:
+                return True
+            from fnmatch import fnmatch
+            return any(fnmatch(fp.name, g) for g in IGNORE_GLOBS)
+
         files: list[Path] = [base_path] if base_path.is_file() else [
             f for f in base_path.glob(glob_pat)
             if f.is_file()
             and f.suffix.lower() not in BINARY_EXT
-            and not any(part in IGNORE_DIRS for part in f.parts)
+            and not _skip(f)
         ]
 
         results: list[str] = []

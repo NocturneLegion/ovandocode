@@ -240,6 +240,59 @@ def tools_test(
     asyncio.run(_go())
 
 
+perm_app = typer.Typer(help="Politica de permisos.")
+app.add_typer(perm_app, name="perm")
+
+
+@perm_app.command("check")
+def perm_check(
+    command: str = typer.Argument(..., help="Comando a evaluar (entre comillas)."),
+    mode: str = typer.Option("allowlist", "--mode", "-m", help="ask | allowlist | yolo"),
+) -> None:
+    """Evalua como la politica trataria un comando."""
+    from ovandocode.permissions import PermissionPolicy
+    pol = PermissionPolicy(mode=mode)  # type: ignore[arg-type]
+    v = pol.decide(command)
+    color = {"allow": "green", "ask": "yellow", "deny": "red"}[v.decision.value]
+    typer.secho(f"[{v.decision.value.upper()}] {v.reason}", fg=color)
+
+
+shell_app = typer.Typer(help="Pruebas de shell tools.")
+app.add_typer(shell_app, name="shell")
+
+
+@shell_app.command("ps")
+def shell_ps(
+    command: str = typer.Argument(..., help="Comando PowerShell."),
+) -> None:
+    """Ejecuta un comando PowerShell usando la tool interna."""
+    import asyncio
+    from ovandocode.tools import ToolRegistry
+
+    async def _go() -> None:
+        reg = ToolRegistry()
+        res = await reg.run("run_powershell", {"command": command, "timeout": 30})
+        typer.echo(res.content)
+
+    asyncio.run(_go())
+
+
+@shell_app.command("py")
+def shell_py(
+    code: str = typer.Argument(..., help="Codigo Python (entre comillas)."),
+) -> None:
+    """Ejecuta un snippet Python usando la tool interna."""
+    import asyncio
+    from ovandocode.tools import ToolRegistry
+
+    async def _go() -> None:
+        reg = ToolRegistry()
+        res = await reg.run("run_python", {"code": code, "timeout": 30})
+        typer.echo(res.content)
+
+    asyncio.run(_go())
+
+
 def main() -> None:
     """Entrypoint principal (TUI en Fase 9)."""
     if len(sys.argv) == 1:
