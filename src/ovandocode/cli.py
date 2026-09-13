@@ -197,6 +197,49 @@ def providers_ping(
         raise typer.Exit(1)
 
 
+tools_app = typer.Typer(help="Herramientas del agente.")
+app.add_typer(tools_app, name="tools")
+
+
+@tools_app.command("list")
+def tools_list() -> None:
+    """Lista herramientas built-in."""
+    from ovandocode.tools import ToolRegistry
+    reg = ToolRegistry()
+    typer.echo("== Herramientas disponibles ==")
+    for n in reg.names():
+        t = reg.get(n)
+        typer.echo(f"  * {n:<15} {t.description.splitlines()[0][:60]}")
+
+
+@tools_app.command("test")
+def tools_test(
+    tool: str = typer.Argument(...),
+    path: str = typer.Option(".", "--path", "-p"),
+) -> None:
+    """Prueba rapida de una herramienta (read_file, list_dir, glob_files)."""
+    import asyncio
+
+    from ovandocode.tools import ToolRegistry
+    reg = ToolRegistry()
+
+    async def _go() -> None:
+        if tool == "read_file":
+            res = await reg.run("read_file", {"path": path, "limit": 10})
+        elif tool == "list_dir":
+            res = await reg.run("list_dir", {"path": path})
+        elif tool == "glob_files":
+            res = await reg.run("glob_files", {"pattern": path or "**/*.py", "max_results": 20})
+        elif tool == "grep":
+            res = await reg.run("grep", {"pattern": path or "import", "max_matches": 20})
+        else:
+            typer.secho(f"[ERR] Uso: tools test <read_file|list_dir|glob_files|grep>", fg="red")
+            raise typer.Exit(1)
+        typer.echo(res.content)
+
+    asyncio.run(_go())
+
+
 def main() -> None:
     """Entrypoint principal (TUI en Fase 9)."""
     if len(sys.argv) == 1:
