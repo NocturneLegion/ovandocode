@@ -293,6 +293,98 @@ def shell_py(
     asyncio.run(_go())
 
 
+sessions_app = typer.Typer(help="Gestion de sesiones de conversacion.")
+app.add_typer(sessions_app, name="sessions")
+
+
+@sessions_app.command("list")
+def sessions_list() -> None:
+    """Lista sesiones guardadas."""
+    from ovandocode.config import sessions_dir
+    from ovandocode.core import SessionStore
+
+    store = SessionStore(sessions_dir())
+    rows = store.list_sessions()
+    if not rows:
+        typer.echo("(sin sesiones)")
+        return
+    typer.echo(f"== {len(rows)} sesion(es) ==")
+    for r in rows:
+        typer.echo(
+            f"  {r.get('id','?'):<28} "
+            f"msgs={r.get('message_count',0):>4}  "
+            f"{r.get('updated_at','')}  "
+            f"{r.get('provider','')}/{r.get('model','')}"
+        )
+
+
+@sessions_app.command("show")
+def sessions_show(session_id: str = typer.Argument(...)) -> None:
+    """Muestra el historial completo de una sesion."""
+    from ovandocode.config import sessions_dir
+    from ovandocode.core import SessionStore
+
+    store = SessionStore(sessions_dir())
+    try:
+        s = store.load(session_id)
+    except FileNotFoundError as e:
+        typer.secho(f"[ERR] {e}", fg="red")
+        raise typer.Exit(1)
+
+    typer.echo(f"== sesion {s.id} ==")
+    typer.echo(f"  provider: {s.provider}")
+    typer.echo(f"  model:    {s.model}")
+    typer.echo(f"  created:  {s.created_at}")
+    typer.echo(f"  updated:  {s.updated_at}")
+    typer.echo(f"  msgs:     {len(s.messages)}")
+    typer.echo("")
+    for i, m in enumerate(s.messages, 1):
+        content = (m.content or "").replace("\n", " ")
+        if len(content) > 100:
+            content = content[:100] + "..."
+        tools = ""
+        if m.tool_calls:
+            tools = " (tools: " + ", ".join(tc.name for tc in m.tool_calls) + ")"
+        typer.echo(f"  [{i:>3}] {m.role:<9} {content}{tools}")
+
+
+@sessions_app.command("delete")
+def sessions_delete(session_id: str = typer.Argument(...)) -> None:
+    """Elimina una sesion."""
+    from ovandocode.config import sessions_dir
+    from ovandocode.core import SessionStore
+
+    store = SessionStore(sessions_dir())
+    if store.delete(session_id):
+        typer.secho(f"[OK] eliminada: {session_id}", fg="green")
+    else:
+        typer.secho(f"[ERR] no existe: {session_id}", fg="red")
+
+
+@sessions_app.command("stats")
+def sessions_stats(session_id: str = typer.Argument(...)) -> None:
+    """Muestra estadisticas de contexto de una sesion."""
+    from ovandocode.config import sessions_dir, get_settings
+    from ovandocode.core import ContextManager, SessionStore
+
+    store = SessionStore(sessions_dir())
+    try:
+        s = store.load(session_id)
+    except FileNotFoundError as e:
+        typer.secho(f"[ERR] {e}", fg="red")
+        raise typer.Exit(1)
+
+    st = get_settings()
+    cm = ContextManager(threshold=st.compact_threshold)
+    stats = cm.stats(s.messages)
+    typer.echo(f"== stats sesion {s.id} ==")
+    typer.echo(f"  mensajes:           {stats.messages}")
+    typer.echo(f"  tokens (estimados): {stats.estimated_tokens}")
+    typer.echo(f"  limite contexto:    {stats.context_limit}")
+    typer.echo(f"  uso:                {stats.usage_pct * 100:.2f}%")
+    typer.echo(f"  necesita compactar: {stats.needs_compact}")
+
+
 def main() -> None:
     """Entrypoint principal (TUI en Fase 9)."""
     if len(sys.argv) == 1:
