@@ -385,6 +385,85 @@ def sessions_stats(session_id: str = typer.Argument(...)) -> None:
     typer.echo(f"  necesita compactar: {stats.needs_compact}")
 
 
+ask_app = typer.Typer(help="Ejecutar el agente en modo one-shot.")
+
+
+@ask_app.command("run")
+def ask_run(
+    prompt: str = typer.Argument(..., help="Prompt o tarea para el agente."),
+    provider: str = typer.Option(None, "--provider", "-p"),
+    model: str = typer.Option(None, "--model", "-m"),
+    max_steps: int = typer.Option(30, "--max-steps"),
+    resume: str = typer.Option(None, "--resume", "-r", help="ID de sesion a reanudar."),
+    yolo: bool = typer.Option(False, "--yolo", help="Auto-aprobar todas las tools (peligroso)."),
+) -> None:
+    """Ejecuta el agente una vez con el prompt dado."""
+    import asyncio
+
+    from ovandocode.core.agent import AgentConfig, AgentEvents, run_agent
+    from ovandocode.config import get_settings
+
+    s = get_settings()
+    cfg = AgentConfig(
+        provider=provider or s.default_provider,
+        model=model or s.default_model,
+        max_steps=max_steps,
+        temperature=s.temperature,
+        max_tokens=s.max_tokens,
+        auto_compact=s.auto_compact,
+    )
+    if yolo:
+        s.permission_mode = "yolo"  # type: ignore[assignment]
+
+    def on_text(t: str) -> None:
+        typer.echo(t)
+
+    def on_tool_call(name: str, args: dict) -> None:
+        preview = str(args)[:120]
+        typer.secho(f"\n>> {name} {preview}", fg="cyan")
+
+    def on_tool_result(name: str, ok: bool, content: str) -> None:
+        color = "green" if ok else "red"
+        body = content if len(content) < 500 else content[:500] + "..."
+        typer.secho(f"<< {name} [{'ok' if ok else 'fail'}]", fg=color)
+        typer.echo(body)
+
+    def on_ask(cmd: str, reason: str) -> bool:
+        typer.secho(f"\n[ASK] {cmd}", fg="yellow")
+        typer.secho(f"      razon: {reason}", fg="yellow")
+        return typer.confirm("Permitir?", default=False)
+
+    def on_error(msg: str) -> None:
+        typer.secho(msg, fg="red")
+
+    events = AgentEvents(
+        on_assistant_text=on_text,
+        on_tool_call=on_tool_call,
+        on_tool_result=on_tool_result,
+        on_ask_permission=on_ask,
+        on_error=on_error,
+    )
+
+    async def _go() -> None:
+        try:
+            reply, session = await run_agent(
+                prompt=prompt,
+                config=cfg,
+                events=events,
+                resume_session_id=resume,
+            )
+        except Exception as e:
+            typer.secho(f"[FATAL] {type(e).__name__}: {e}", fg="red")
+            raise typer.Exit(1)
+        typer.echo("")
+        typer.secho(f"[sesion: {session.id}]", fg="bright_black")
+
+    asyncio.run(_go())
+
+
+app.add_typer(ask_app, name="ask")
+
+
 def main() -> None:
     """Entrypoint principal (TUI en Fase 9)."""
     if len(sys.argv) == 1:
