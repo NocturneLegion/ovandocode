@@ -1,3 +1,17 @@
+# ============================================================
+#  OVANDOCODE - FIX set-key: metodos alternativos de entrada
+#  Guardar como: D:\Trabajo\OvandoCode\_fix_setkey.ps1
+# ============================================================
+$ErrorActionPreference = 'Stop'
+$ProjectRoot = 'D:\Trabajo\OvandoCode'
+Set-Location $ProjectRoot
+$utf8 = New-Object System.Text.UTF8Encoding $false
+
+Write-Host "=== FIX set-key ===" -ForegroundColor Cyan
+
+$cliPath = "$ProjectRoot\src\ovandocode\cli.py"
+
+$cli = @'
 """OVANDOCODE - CLI (Fase 2: version y config)."""
 from __future__ import annotations
 
@@ -159,3 +173,18 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+'@
+
+[IO.File]::WriteAllText($cliPath, $cli, $utf8)
+Write-Host "[OK] cli.py actualizado" -ForegroundColor Green
+
+# Prueba de ayuda
+Write-Host "`n-> probando ayuda del comando..." -ForegroundColor Yellow
+uv run ovandocode config set-key --help
+
+# Commit
+Write-Host "`n-> commit..." -ForegroundColor Yellow
+git add .
+git commit -m "Fix Fase 2: set-key acepta --value, --from-env, --stdin" | Out-Null
+
+Write-Host "`nFix set-key completado." -ForegroundColor Cyan
