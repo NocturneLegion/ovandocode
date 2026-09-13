@@ -148,6 +148,55 @@ def config_del_key(provider: str = typer.Argument(...)) -> None:
     typer.echo(f"[OK] key eliminada de keyring: {provider}")
 
 
+providers_app = typer.Typer(help="Proveedores LLM disponibles.")
+app.add_typer(providers_app, name="providers")
+
+
+@providers_app.command("list")
+def providers_list() -> None:
+    """Lista proveedores registrados y su estado."""
+    from ovandocode.providers import REGISTRY, list_providers
+    cm = get_credentials()
+    typer.echo("== Proveedores LLM ==")
+    for name in list_providers():
+        cls = REGISTRY[name]
+        status = cm.source_of(name) if cls.requires_api_key else "local"
+        ok = "OK " if (status != "none" or not cls.requires_api_key) else "-- "
+        key_req = "requiere key" if cls.requires_api_key else "sin key"
+        typer.echo(f"  [{ok}] {name:<12} {key_req:<13} source={status}")
+
+
+@providers_app.command("ping")
+def providers_ping(
+    provider: str = typer.Argument(...),
+    model: str = typer.Option(None, "--model", "-m"),
+) -> None:
+    """Envia un prompt trivial a un proveedor para verificar conectividad."""
+    import asyncio
+
+    from ovandocode.providers import Message, create_provider
+    from ovandocode.providers.types import ChatRequest
+
+    async def _go() -> None:
+        p = create_provider(provider)
+        chosen = model or get_settings().default_model
+        typer.echo(f"-> {provider} :: {chosen}")
+        async with p:
+            resp = await p.chat(ChatRequest(
+                messages=[Message(role="user", content="Responde solo: PONG")],
+                model=chosen,
+                max_tokens=16,
+            ))
+        typer.secho(f"respuesta: {resp.content.strip()!r}", fg="green")
+        typer.echo(f"tokens: in={resp.usage.input_tokens} out={resp.usage.output_tokens}")
+
+    try:
+        asyncio.run(_go())
+    except Exception as e:
+        typer.secho(f"[ERR] {type(e).__name__}: {e}", fg="red")
+        raise typer.Exit(1)
+
+
 def main() -> None:
     """Entrypoint principal (TUI en Fase 9)."""
     if len(sys.argv) == 1:
