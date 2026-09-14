@@ -33,3 +33,10 @@ Thumbs.db
 .pytest_cache/
 .coverage
 htmlcov/
+# Temporales de fase
+_fase*.ps1
+_fix_*.py
+_gen*.py
+_test_*.py
+HOLA.md
+*.tmp
