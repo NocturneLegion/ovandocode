@@ -1,4 +1,10 @@
 """Configuracion, rutas y credenciales de OVANDOCODE."""
+from ovandocode.config.config_writer import (
+    DEFAULT_PERSISTED_FIELDS,
+    GlobalConfig,
+    GlobalConfigError,
+    PERSISTABLE_FIELDS,
+)
 from ovandocode.config.credentials import (
     CredentialManager,
     CredentialStatus,
@@ -16,6 +22,10 @@ from ovandocode.config.paths import (
 from ovandocode.config.settings import Settings, get_settings, reload_settings
 
 __all__ = [
+    "DEFAULT_PERSISTED_FIELDS",
+    "GlobalConfig",
+    "GlobalConfigError",
+    "PERSISTABLE_FIELDS",
     "CredentialManager",
     "CredentialStatus",
     "Settings",

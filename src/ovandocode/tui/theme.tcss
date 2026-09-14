@@ -47,3 +47,58 @@ Screen {
     color: $text-muted;
     padding-bottom: 1;
 }
+
+
+/* ---------- Picker modal ---------- */
+#picker-dialog {
+    background: $surface;
+    border: thick $accent;
+    padding: 1 2;
+    width: 80%;
+    max-width: 100;
+    max-height: 80%;
+    align: center middle;
+}
+
+#picker-title {
+    text-style: bold;
+    color: $accent;
+    padding-bottom: 1;
+}
+
+#picker-subtitle {
+    color: $text-muted;
+    padding-bottom: 1;
+}
+
+#picker-search {
+    margin-bottom: 1;
+}
+
+#picker-scroll {
+    height: 1fr;
+    min-height: 8;
+    max-height: 20;
+    border: round $primary;
+    padding: 0 1;
+    background: $panel;
+}
+
+#picker-list {
+    height: auto;
+}
+
+.picker-item {
+    color: $text;
+}
+
+.picker-selected {
+    color: $accent;
+    text-style: bold;
+    background: $boost;
+}
+
+.picker-empty {
+    color: $text-muted;
+    text-style: italic;
+}

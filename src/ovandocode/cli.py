@@ -205,18 +205,108 @@ app.add_typer(config_app, name="config")
 
 @config_app.command("show")
 def config_show() -> None:
-    """Muestra la configuracion activa."""
+    """Muestra la configuracion efectiva activa."""
     from ovandocode.config import config_dir, get_settings, logs_dir, project_root
     s = get_settings()
-    console.print("[bold]== OVANDOCODE config ==[/]")
+    console.print("[bold]== OVANDOCODE config (efectiva) ==[/]")
     console.print(f"  project_root     : {project_root()}")
     console.print(f"  config_dir       : {config_dir()}")
     console.print(f"  logs_dir         : {logs_dir()}")
     console.print(f"  default_provider : {s.default_provider}")
     console.print(f"  default_model    : {s.default_model}")
+    console.print(f"  temperature      : {s.temperature}")
+    console.print(f"  max_tokens       : {s.max_tokens}")
+    console.print(f"  request_timeout  : {s.request_timeout}")
     console.print(f"  permission_mode  : {s.permission_mode}")
+    console.print(f"  auto_compact     : {s.auto_compact}")
+    console.print(f"  compact_threshold: {s.compact_threshold}")
     console.print(f"  theme            : {s.theme}")
     console.print(f"  log_level        : {s.log_level}")
+
+
+@config_app.command("get")
+def config_get(key: str = typer.Argument(..., help="Nombre del campo.")) -> None:
+    """Lee un valor persistido en config.toml (o vacio si no esta)."""
+    from ovandocode.config import GlobalConfig, GlobalConfigError
+    gc = GlobalConfig()
+    try:
+        value = gc.get(key)
+    except GlobalConfigError as e:
+        console.print(f"[red][ERR] {e}[/]")
+        raise typer.Exit(1)
+    if value is None:
+        console.print(f"[dim](no seteado: {key})[/]")
+    else:
+        console.print(f"{key} = {value!r}")
+
+
+@config_app.command("set")
+def config_set(
+    key: str = typer.Argument(..., help="Campo a persistir."),
+    value: str = typer.Argument(..., help="Valor (string; se coercionara)."),
+) -> None:
+    """Persiste un valor en config.toml (afecta a futuros proyectos)."""
+    from ovandocode.config import GlobalConfig, GlobalConfigError
+    gc = GlobalConfig()
+    try:
+        gc.set(key, value)
+    except GlobalConfigError as e:
+        console.print(f"[red][ERR] {e}[/]")
+        raise typer.Exit(1)
+    console.print(f"[green][OK] {key} = {gc.get(key)!r}[/]")
+    console.print(f"[dim]guardado en: {gc.path_str()}[/]")
+
+
+@config_app.command("unset")
+def config_unset(key: str = typer.Argument(...)) -> None:
+    """Borra un valor persistido de config.toml."""
+    from ovandocode.config import GlobalConfig
+    gc = GlobalConfig()
+    if gc.unset(key):
+        console.print(f"[green][OK] {key} eliminado[/]")
+    else:
+        console.print(f"[yellow]({key} no estaba seteado)[/]")
+
+
+@config_app.command("all")
+def config_all() -> None:
+    """Muestra todos los valores persistidos en config.toml."""
+    from ovandocode.config import GlobalConfig
+    gc = GlobalConfig()
+    data = gc.all()
+    if not data:
+        console.print(f"[dim](config.toml vacio: {gc.path_str()})[/]")
+        return
+    console.print(f"[bold]== config.toml ({gc.path_str()}) ==[/]")
+    for k, v in sorted(data.items()):
+        console.print(f"  {k} = {v!r}")
+
+
+@config_app.command("reset")
+def config_reset(
+    yes: bool = typer.Option(False, "--yes", "-y", help="No preguntar."),
+) -> None:
+    """Borra TODA la configuracion persistida en config.toml."""
+    from ovandocode.config import GlobalConfig
+    gc = GlobalConfig()
+    if not gc.exists():
+        console.print("[dim](no hay config.toml)[/]")
+        return
+    if not yes:
+        if not typer.confirm(f"Borrar {gc.path_str()}?"):
+            raise typer.Exit(0)
+    gc.reset()
+    console.print("[green][OK] config.toml eliminado[/]")
+
+
+@config_app.command("file")
+def config_file_path() -> None:
+    """Muestra la ruta del archivo config.toml."""
+    from ovandocode.config import GlobalConfig
+    gc = GlobalConfig()
+    exists = "[green]existe[/]" if gc.exists() else "[dim]no existe[/]"
+    console.print(f"{gc.path_str()}  ({exists})")
+
 
 
 @config_app.command("providers")

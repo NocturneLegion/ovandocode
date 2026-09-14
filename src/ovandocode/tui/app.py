@@ -17,15 +17,15 @@ from ovandocode.core import (
 )
 from ovandocode.providers import REGISTRY, list_providers
 from ovandocode.skills import SkillLoader
-from ovandocode.tui.widgets.permission import PermissionScreen
+from ovandocode.tui.widgets import PermissionScreen, PickerScreen
 
 HELP_TEXT = """[bold]Comandos disponibles[/]
   /help              Muestra esta ayuda
   /quit              Salir
   /clear             Nueva sesion (limpia el chat)
   /session           Info de la sesion actual
-  /model [nombre]    Ver o cambiar el modelo
-  /provider [nombre] Ver o cambiar el proveedor
+  /model [nombre]    Abre selector de modelos (o directo si pasas nombre)
+  /provider [nombre] Abre selector de proveedores (o directo)
   /skills            Lista skills disponibles
   /mcp               Estado de los servidores MCP
   /tools             Lista herramientas activas
@@ -137,7 +137,7 @@ class OvandoCodeApp(App):
             return
 
         if text.startswith("/"):
-            await self._handle_slash(text)
+            self._handle_slash(text)  # @work -> corre en worker
             return
 
         self._log().write(f"[bold green]Tu:[/] {text}")
@@ -156,6 +156,7 @@ class OvandoCodeApp(App):
             self._update_status()
 
     # ---------------- slash commands ----------------
+    @work(exclusive=False)
     async def _handle_slash(self, text: str) -> None:
         parts = text[1:].split(maxsplit=1)
         cmd = parts[0].lower() if parts else ""
@@ -177,30 +178,17 @@ class OvandoCodeApp(App):
                     f"  mensajes: {len(self.session.messages)}"
                 )
         elif cmd == "model":
-            if not arg:
-                self._log().write(f"Modelo actual: [yellow]{self.agent_config.model}[/]")
+            if arg:
+                # Modo directo: /model gpt-4o
+                await self._change_model(arg)
             else:
-                self.agent_config.model = arg
-                if self.session:
-                    self.session.model = arg
-                self._log().write(f"[green]Modelo cambiado a:[/] {arg}")
-                self._update_status()
+                # Modo interactivo: abrir picker
+                await self._pick_model()
         elif cmd == "provider":
-            if not arg:
-                self._log().write(
-                    f"Proveedor actual: [yellow]{self.agent_config.provider}[/]\n"
-                    f"Disponibles: {', '.join(list_providers())}"
-                )
+            if arg:
+                await self._change_provider(arg)
             else:
-                if arg not in REGISTRY:
-                    self._log().write(f"[red]Proveedor desconocido: {arg}[/]")
-                else:
-                    self.agent_config.provider = arg
-                    if self.session:
-                        self.session.provider = arg
-                    self._log().write(f"[green]Proveedor cambiado a:[/] {arg}")
-                    self._log().write("[dim](reinicia el agente para aplicar)[/]")
-                    self._update_status()
+                await self._pick_provider()
         elif cmd == "skills":
             loader = SkillLoader(project_root=self.agent.tools.project_root if self.agent else None)
             skills = loader.all()
@@ -264,6 +252,160 @@ class OvandoCodeApp(App):
             await self.agent.__aenter__()
         self.run_worker(_reset(), exclusive=True)
         self._update_status()
+
+    # ---------------- helpers interactivos ----------------
+
+    async def _pick_model(self) -> None:
+        """Abre el selector de modelos del proveedor actual."""
+        from ovandocode.providers import ModelsCache, create_provider
+
+        provider = self.agent_config.provider
+        current = self.agent_config.model
+
+        self._log().write(f"[dim]Obteniendo modelos de {provider}...[/]")
+
+        cache = ModelsCache()
+        models: list[str] | None = cache.get(provider)
+
+        if models is None:
+            try:
+                p = create_provider(provider)
+                async with p:
+                    models = await p.list_models()
+                if models:
+                    cache.set(provider, models)
+            except Exception as e:
+                self._log().write(f"[red]No se pudieron obtener modelos: {e}[/]")
+                self._log().write("[yellow]Puedes escribir el modelo directo con: /model <nombre>[/]")
+                return
+
+        if not models:
+            self._log().write(f"[yellow](sin modelos para {provider})[/]")
+            return
+
+        items = [(m, m) for m in models]
+        result = await self.push_screen_wait(
+            PickerScreen(
+                title=f"Modelos de {provider}",
+                subtitle=f"{len(models)} disponibles - escribe para filtrar",
+                items=items,
+                current=current,
+            )
+        )
+        if result:
+            await self._change_model(result)
+
+    async def _change_model(self, model: str) -> None:
+        """Aplica un cambio de modelo + persiste si se pide."""
+        self.agent_config.model = model
+        if self.session:
+            self.session.model = model
+
+        # Recargar el agente con el nuevo modelo
+        await self._reload_agent()
+
+        self._log().write(f"[green]Modelo cambiado a:[/] {model}")
+        self._update_status()
+        await self._maybe_persist("default_model", model)
+
+    async def _pick_provider(self) -> None:
+        """Abre el selector de proveedores."""
+        from ovandocode.providers import list_providers
+
+        providers = list_providers()
+        items = [(p, p) for p in providers]
+        result = await self.push_screen_wait(
+            PickerScreen(
+                title="Proveedores disponibles",
+                subtitle="Elige uno para cambiar el LLM",
+                items=items,
+                current=self.agent_config.provider,
+                searchable=False,
+            )
+        )
+        if result:
+            await self._change_provider(result)
+
+    async def _change_provider(self, provider: str) -> None:
+        """Aplica un cambio de proveedor + persiste si se pide."""
+        from ovandocode.config import get_credentials
+        from ovandocode.providers import REGISTRY
+
+        if provider not in REGISTRY:
+            self._log().write(f"[red]Proveedor desconocido: {provider}[/]")
+            return
+
+        cls = REGISTRY[provider]
+        if cls.requires_api_key:
+            key = get_credentials().get(provider)
+            if not key:
+                self._log().write(
+                    f"[yellow]El proveedor {provider} requiere API key.[/]"
+                )
+                self._log().write(
+                    f"[dim]Ejecuta fuera de la TUI: ovandocode config set-key {provider}[/]"
+                )
+                return
+
+        self.agent_config.provider = provider
+        if self.session:
+            self.session.provider = provider
+
+        # Reintentar con el modelo por defecto del proveedor
+        await self._reload_agent()
+
+        self._log().write(f"[green]Proveedor cambiado a:[/] {provider}")
+        self._log().write(f"[dim]Modelo actual: {self.agent_config.model}[/]")
+        self._update_status()
+        await self._maybe_persist("default_provider", provider)
+
+    async def _reload_agent(self) -> None:
+        """Reinstancia el agente con la config actual (provider/model/tools)."""
+        if self.agent is not None:
+            try:
+                await self.agent.__aexit__(None, None, None)
+            except Exception:
+                pass
+
+        events = AgentEvents(
+            on_assistant_text=self._ev_assistant_text,
+            on_tool_call=self._ev_tool_call,
+            on_tool_result=self._ev_tool_result,
+            on_error=self._ev_error,
+            on_ask_permission=self._ev_ask_permission,
+            on_compact=self._ev_compact,
+        )
+        self.agent = Agent(
+            config=self.agent_config,
+            session=self.session,
+            events=events,
+            store=self.store,
+        )
+        await self.agent.__aenter__()
+
+    async def _maybe_persist(self, key: str, value) -> None:
+        """Pregunta si guardar el cambio en config.toml global."""
+        from ovandocode.config import GlobalConfig, GlobalConfigError
+
+        try:
+            persist = await self.push_screen_wait(
+                PermissionScreen(
+                    command=f"ovandocode config set {key} {value}",
+                    reason="Guardar este cambio para futuros proyectos (config.toml global)",
+                )
+            )
+        except Exception:
+            persist = False
+
+        if not persist:
+            return
+
+        gc = GlobalConfig()
+        try:
+            gc.set(key, value)
+            self._log().write(f"[green]Guardado en config.toml:[/] {key} = {value!r}")
+        except GlobalConfigError as e:
+            self._log().write(f"[red]No se pudo guardar: {e}[/]")
 
     def _update_status(self) -> None:
         if self.session is None:

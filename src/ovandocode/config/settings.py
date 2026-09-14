@@ -1,12 +1,12 @@
 """Settings globales de OVANDOCODE (Pydantic Settings)."""
 from __future__ import annotations
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import Field
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings, PydanticBaseSettingsSource, SettingsConfigDict
 
-from ovandocode.config.paths import env_file
+from ovandocode.config.paths import config_file, env_file
 
 Provider = Literal[
     "openrouter", "openai", "anthropic", "gemini", "deepseek",
@@ -14,6 +14,32 @@ Provider = Literal[
 ]
 PermissionMode = Literal["ask", "allowlist", "yolo"]
 Theme = Literal["dark", "light"]
+
+
+class TomlDefaultsSource(PydanticBaseSettingsSource):
+    """Lee la seccion [defaults] de config.toml (fuente de menor prioridad)."""
+
+    def __init__(self, settings_cls, toml_path):  # type: ignore[no-untyped-def]
+        super().__init__(settings_cls)
+        self._toml_path = toml_path
+
+    def get_field_value(self, field, field_name):  # type: ignore[no-untyped-def]
+        return None, field_name, False
+
+    def __call__(self) -> dict[str, Any]:
+        import tomllib
+        from pathlib import Path
+
+        p = Path(self._toml_path)
+        if not p.exists():
+            return {}
+        try:
+            with p.open("rb") as f:
+                data = tomllib.load(f)
+        except Exception:
+            return {}
+        defaults = data.get("defaults", {})
+        return {k: v for k, v in defaults.items() if v is not None}
 
 
 class Settings(BaseSettings):
@@ -50,6 +76,31 @@ class Settings(BaseSettings):
     # Endpoints locales
     ollama_base_url: str = "http://localhost:11434"
     lmstudio_base_url: str = "http://localhost:1234/v1"
+
+    @classmethod
+    def settings_customise_sources(  # type: ignore[override]
+        cls,
+        settings_cls,
+        init_settings,
+        env_settings,
+        dotenv_settings,
+        file_secret_settings,
+    ):
+        """Orden de prioridad (mayor gana):
+            1. init_settings (argumentos directos)
+            2. env_settings (variables OVANDOCODE_* del SO)
+            3. dotenv_settings (.env del proyecto)
+            4. toml_defaults (config.toml global)
+            5. defaults del codigo
+        """
+        toml_source = TomlDefaultsSource(settings_cls, config_file())
+        return (
+            init_settings,
+            env_settings,
+            dotenv_settings,
+            toml_source,
+            file_secret_settings,
+        )
 
 
 _settings: Settings | None = None
