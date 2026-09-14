@@ -43,6 +43,14 @@ class BaseProvider(ABC):
         """Envia una solicitud y emite deltas de texto a medida que llegan."""
 
     # ---------------- Ciclo de vida ----------------
+    async def list_models(self) -> list[str]:
+        """Lista los modelos disponibles en el proveedor.
+
+        Por defecto devuelve lista vacia. Subclases que puedan consultar
+        el endpoint /models deben sobrescribir este metodo.
+        """
+        return []
+
     async def close(self) -> None:
         """Libera recursos (conexiones HTTP). Sobrescribir si aplica."""
         return None

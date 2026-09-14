@@ -17,6 +17,7 @@ from ovandocode.providers.gemini import GeminiProvider
 from ovandocode.providers.groq import GroqProvider
 from ovandocode.providers.lmstudio import LMStudioProvider
 from ovandocode.providers.mistral import MistralProvider
+from ovandocode.providers.models_cache import ModelsCache
 from ovandocode.providers.ollama import OllamaProvider
 from ovandocode.providers.openai import OpenAIProvider
 from ovandocode.providers.openai_compat import OpenAICompatProvider
@@ -106,6 +107,7 @@ __all__ = [
     "LMStudioProvider",
     "Message",
     "MistralProvider",
+    "ModelsCache",
     "OllamaProvider",
     "OpenAICompatProvider",
     "OpenAIProvider",

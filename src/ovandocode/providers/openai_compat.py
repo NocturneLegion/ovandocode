@@ -133,5 +133,25 @@ class OpenAICompatProvider(BaseProvider):
         except httpx.RequestError as e:
             raise ProviderConnectionError(f"{self.name}: {e}") from e
 
+    async def list_models(self) -> list[str]:
+        """Lista modelos via GET /models (endpoint OpenAI-compatible)."""
+        self._require_key()
+        try:
+            r = await self._http.get("/models")
+        except httpx.RequestError as e:
+            raise ProviderConnectionError(f"{self.name}: {e}") from e
+        self._raise_http(r)
+        try:
+            data = r.json()
+        except Exception as e:
+            raise ProviderResponseError(f"{self.name}: respuesta no JSON: {e}") from None
+        items = data.get("data") or []
+        out: list[str] = []
+        for m in items:
+            mid = m.get("id") or m.get("name")
+            if mid:
+                out.append(str(mid))
+        return sorted(out)
+
     async def close(self) -> None:
         await self._http.aclose()

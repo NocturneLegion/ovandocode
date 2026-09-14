@@ -325,6 +325,93 @@ def providers_ping(
         raise typer.Exit(1)
 
 
+@providers_app.command("models")
+def providers_models(
+    provider: str = typer.Argument(..., help="Nombre del proveedor."),
+    refresh: bool = typer.Option(False, "--refresh", "-r", help="Ignora el cache y refetchea."),
+    limit: int = typer.Option(0, "--limit", "-n", help="0 = sin limite."),
+    filter_str: str | None = typer.Option(None, "--filter", "-f", help="Filtro substring."),
+) -> None:
+    """Lista los modelos disponibles del proveedor (cache 24h)."""
+    from ovandocode.providers import REGISTRY, ModelsCache, create_provider
+
+    if provider not in REGISTRY:
+        console.print(f"[red][ERR] proveedor desconocido: {provider}[/]")
+        raise typer.Exit(1)
+
+    cache = ModelsCache()
+    models: list[str] | None = None
+
+    if not refresh:
+        models = cache.get(provider)
+
+    if models is None:
+        console.print(f"[dim]Fetching modelos de {provider}...[/]")
+
+        async def _fetch() -> list[str]:
+            p = create_provider(provider)
+            try:
+                async with p:
+                    return await p.list_models()
+            except Exception as e:
+                console.print(f"[red][ERR] {type(e).__name__}: {e}[/]")
+                return []
+
+        models = asyncio.run(_fetch())
+        if models:
+            cache.set(provider, models)
+
+    if not models:
+        console.print(f"[yellow](sin modelos para {provider})[/]")
+        return
+
+    if filter_str:
+        q = filter_str.lower()
+        models = [m for m in models if q in m.lower()]
+
+    if limit > 0:
+        models = models[:limit]
+
+    console.print(f"[bold]{len(models)} modelo(s) de {provider}:[/]")
+    for m in models:
+        console.print(f"  {m}")
+
+
+@providers_app.command("models-cache")
+def providers_models_cache(
+    provider: str | None = typer.Argument(None, help="Proveedor a limpiar (o todos)."),
+) -> None:
+    """Muestra o limpia el cache de modelos."""
+    from ovandocode.providers import ModelsCache
+
+    cache = ModelsCache()
+
+    if provider is None:
+        info = cache.info()
+        if not info:
+            console.print("(cache vacio)")
+            return
+        console.print("[bold]Cache de modelos:[/]")
+        for entry in info:
+            console.print(
+                f"  {entry['provider']:<12} {entry['count']:>5} modelos   "
+                f"fetched: {entry['fetched_at']}"
+            )
+    else:
+        cache.clear(provider)
+        console.print(f"[green][OK] cache limpiado: {provider}[/]")
+
+
+@providers_app.command("models-clear-all")
+def providers_models_clear_all() -> None:
+    """Limpia TODA la cache de modelos."""
+    from ovandocode.providers import ModelsCache
+
+    cache = ModelsCache()
+    cache.clear()
+    console.print("[green][OK] cache de modelos limpiada completamente[/]")
+
+
 # ============================================================
 # SUB-COMANDO: tools
 # ============================================================

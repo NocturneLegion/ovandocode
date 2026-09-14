@@ -163,5 +163,27 @@ class GeminiProvider(BaseProvider):
         except httpx.RequestError as e:
             raise ProviderConnectionError(f"gemini: {e}") from e
 
+    async def list_models(self) -> list[str]:
+        """Lista modelos via GET /v1beta/models (Google Gemini)."""
+        self._require_key()
+        try:
+            r = await self._http.get(f"/models?key={self.api_key}")
+        except httpx.RequestError as e:
+            raise ProviderConnectionError(f"gemini: {e}") from e
+        self._raise_http(r)
+        try:
+            data = r.json()
+        except Exception as e:
+            raise ProviderResponseError(f"gemini: respuesta no JSON: {e}") from None
+        out: list[str] = []
+        for m in data.get("models", []):
+            name = m.get("name", "")
+            # Strip "models/" prefix
+            if name.startswith("models/"):
+                name = name[len("models/"):]
+            if name:
+                out.append(name)
+        return sorted(out)
+
     async def close(self) -> None:
         await self._http.aclose()

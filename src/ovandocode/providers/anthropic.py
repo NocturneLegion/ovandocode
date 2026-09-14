@@ -170,5 +170,21 @@ class AnthropicProvider(BaseProvider):
         except httpx.RequestError as e:
             raise ProviderConnectionError(f"anthropic: {e}") from e
 
+    async def list_models(self) -> list[str]:
+        """Lista modelos via GET /v1/models (Anthropic)."""
+        self._require_key()
+        try:
+            r = await self._http.get("/models", params={"limit": 1000})
+        except httpx.RequestError as e:
+            raise ProviderConnectionError(f"anthropic: {e}") from e
+        self._raise_http(r)
+        try:
+            data = r.json()
+        except Exception as e:
+            raise ProviderResponseError(f"anthropic: respuesta no JSON: {e}") from None
+        items = data.get("data") or []
+        out = [str(m.get("id")) for m in items if m.get("id")]
+        return sorted(out)
+
     async def close(self) -> None:
         await self._http.aclose()
