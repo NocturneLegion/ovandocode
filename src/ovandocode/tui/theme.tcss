@@ -1,0 +1,49 @@
+Screen {
+    background: $surface;
+}
+
+#chat {
+    background: $panel;
+    border: round $primary;
+    padding: 0 1;
+    margin: 1;
+}
+
+#input {
+    dock: bottom;
+    margin: 0 1 1 1;
+    border: round $accent;
+}
+
+#status {
+    dock: bottom;
+    height: 1;
+    background: $boost;
+    color: $text-muted;
+    padding: 0 1;
+}
+
+#perm-dialog {
+    background: $surface;
+    border: thick $warning;
+    padding: 1 2;
+    width: 70;
+    height: auto;
+    align: center middle;
+}
+
+#perm-title {
+    text-style: bold;
+    color: $warning;
+    padding-bottom: 1;
+}
+
+#perm-cmd {
+    color: $text;
+    padding-bottom: 1;
+}
+
+#perm-reason {
+    color: $text-muted;
+    padding-bottom: 1;
+}

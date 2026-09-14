@@ -22,6 +22,7 @@ from ovandocode.core.session import Session, SessionStore
 from ovandocode.permissions import Decision, PermissionPolicy
 from ovandocode.providers import create_provider
 from ovandocode.providers.base import BaseProvider
+from ovandocode.skills import SkillLoader
 from ovandocode.providers.types import (
     ChatRequest,
     Message,
@@ -58,6 +59,7 @@ class AgentConfig:
     max_tokens: int = 8192
     auto_compact: bool = True
     system_prompt_override: str | None = None
+    provider_timeout: float = 180.0
 
 
 class Agent:
@@ -86,9 +88,11 @@ class Agent:
     # ---------------- ciclo de vida ----------------
     async def __aenter__(self) -> "Agent":
         self._provider = create_provider(self.config.provider)
+        await self.tools.async_setup_mcp()
         return self
 
     async def __aexit__(self, *exc: object) -> None:
+        await self.tools.async_teardown_mcp()
         if self._provider:
             await self._provider.close()
 
@@ -104,9 +108,15 @@ class Agent:
     def _ensure_system_prompt(self) -> None:
         if self.session.messages and self.session.messages[0].role == "system":
             return
-        prompt = self.config.system_prompt_override or build_system_prompt(
-            self.tools.project_root
-        )
+        if self.config.system_prompt_override:
+            prompt = self.config.system_prompt_override
+        else:
+            loader = SkillLoader(project_root=self.tools.project_root)
+            catalog = loader.catalog_text()
+            prompt = build_system_prompt(
+                self.tools.project_root,
+                skills_catalog=catalog,
+            )
         self.session.messages.insert(0, system(prompt))
         self.session._persist_full()
 
@@ -128,7 +138,10 @@ class Agent:
             print(f"\n[ASK] {command}\n  razon: {reason}", file=sys.stderr)
             print("[ASK] sin callback; denegado por seguridad.", file=sys.stderr)
             return False
-        return bool(self.events.on_ask_permission(command, reason))
+        result = self.events.on_ask_permission(command, reason)
+        if asyncio.iscoroutine(result):
+            result = await result
+        return bool(result)
 
     async def _run_tool(self, name: str, arguments: dict) -> tuple[bool, str]:
         """Ejecuta una tool respetando la politica de permisos."""
@@ -168,9 +181,19 @@ class Agent:
                 max_tokens=self.config.max_tokens,
             )
 
+            assert self._provider is not None
             try:
-                assert self._provider is not None
-                resp = await self._provider.chat(req)
+                resp = await asyncio.wait_for(
+                    self._provider.chat(req),
+                    timeout=self.config.provider_timeout,
+                )
+            except asyncio.TimeoutError:
+                msg = (
+                    f"[TIMEOUT] el proveedor no respondio en "
+                    f"{self.config.provider_timeout}s. Intenta de nuevo o cambia de modelo."
+                )
+                self._emit("on_error", msg)
+                return msg
             except ProviderError as e:
                 msg = f"[PROVIDER ERROR] {type(e).__name__}: {e}"
                 self._emit("on_error", msg)

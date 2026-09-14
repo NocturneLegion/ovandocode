@@ -30,10 +30,12 @@ y ejecutar comandos en PowerShell, bash y Python. Usalas proactivamente.
 - Bloques de codigo con triple backtick cuando muestres codigo.
 - Si vas a usar una herramienta, hazlo directamente (no describas "voy a usar X").
 - Al terminar una tarea, resume en 1-3 lineas que hiciste.
+
+{skills_catalog}
 """
 
 
-def build_system_prompt(project_root: Path) -> str:
+def build_system_prompt(project_root: Path, skills_catalog: str = "") -> str:
     import platform
     from datetime import datetime
 
@@ -41,4 +43,5 @@ def build_system_prompt(project_root: Path) -> str:
         os_name=platform.platform(),
         project_root=str(project_root),
         date=datetime.now().strftime("%Y-%m-%d %H:%M"),
+        skills_catalog=skills_catalog or "",
     )

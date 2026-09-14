@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "hello": {
+      "transport": "stdio",
+      "command": ".venv\\Scripts\\python.exe",
+      "args": ["scripts/mcp_hello_server.py"],
+      "description": "Servidor MCP de ejemplo con sumar, saludar, hora_actual"
+    }
+  }
+}

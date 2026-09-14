@@ -464,7 +464,174 @@ def ask_run(
 app.add_typer(ask_app, name="ask")
 
 
+skills_app = typer.Typer(help="Gestion de skills.")
+app.add_typer(skills_app, name="skills")
+
+
+@skills_app.command("list")
+def skills_list() -> None:
+    """Lista skills disponibles."""
+    from ovandocode.config import project_root
+    from ovandocode.skills import SkillLoader
+    loader = SkillLoader(project_root=project_root())
+    skills = loader.all()
+    if not skills:
+        typer.echo("(sin skills)")
+        return
+    typer.echo(f"== {len(skills)} skill(s) ==")
+    for s in skills:
+        origen = "builtin" if s.builtin else "proyecto"
+        typer.echo(f"  [{origen:<8}] {s.name:<20} v{s.version:<8} {s.description[:60]}")
+    errs = loader.errors()
+    if errs:
+        typer.secho(f"\n[!] {len(errs)} error(es):", fg="yellow")
+        for e in errs:
+            typer.secho(f"    {e}", fg="yellow")
+
+
+@skills_app.command("show")
+def skills_show(name: str = typer.Argument(...)) -> None:
+    """Muestra una skill completa."""
+    from ovandocode.config import project_root
+    from ovandocode.skills import SkillError, SkillLoader
+    loader = SkillLoader(project_root=project_root())
+    try:
+        s = loader.get(name)
+    except SkillError as e:
+        typer.secho(f"[ERR] {e}", fg="red")
+        raise typer.Exit(1)
+    typer.echo(s.to_full())
+    typer.echo("")
+    typer.secho(f"[path: {s.path}]", fg="bright_black")
+
+
+@skills_app.command("init")
+def skills_init(name: str = typer.Argument(...)) -> None:
+    """Crea una skill nueva en skills/<name>/SKILL.md."""
+    from ovandocode.config import project_root
+    root = project_root() / "skills" / name
+    path = root / "SKILL.md"
+    if path.exists():
+        typer.secho(f"[ERR] ya existe: {path}", fg="red")
+        raise typer.Exit(1)
+    root.mkdir(parents=True, exist_ok=True)
+    content = (
+        "---\n"
+        f"name: {name}\n"
+        "description: Describe brevemente que hace esta skill\n"
+        "when_to_use: Cuando el usuario pida...\n"
+        "tags: [ejemplo]\n"
+        "version: 0.1.0\n"
+        "---\n"
+        "\n"
+        "# " + name.replace("-", " ").title() + "\n"
+        "\n"
+        "## Instrucciones\n"
+        "\n"
+        "Aqui van las instrucciones detalladas que el agente debe seguir.\n"
+    )
+    path.write_text(content, encoding="utf-8")
+    typer.secho(f"[OK] creada: {path}", fg="green")
+    typer.echo(f"Editala con: notepad \"{path}\"")
+
+
+mcp_app = typer.Typer(help="Servidores MCP.")
+app.add_typer(mcp_app, name="mcp")
+
+
+@mcp_app.command("list")
+def mcp_list() -> None:
+    """Lista servidores MCP configurados."""
+    from ovandocode.config import project_root
+    from ovandocode.mcp.config import default_config_path, load_mcp_config
+
+    path = default_config_path(project_root())
+    if not path.exists():
+        typer.echo(f"(no existe {path})")
+        typer.echo("Crea uno con: ovandocode mcp init")
+        return
+    try:
+        configs = load_mcp_config(path)
+    except Exception as e:
+        typer.secho(f"[ERR] {e}", fg="red")
+        raise typer.Exit(1)
+    if not configs:
+        typer.echo("(sin servidores MCP habilitados)")
+        return
+    typer.echo(f"== {len(configs)} servidor(es) MCP ==")
+    for c in configs:
+        typer.echo(f"  * {c.name:<15} [{c.transport}]")
+        if c.transport == "stdio":
+            typer.echo(f"      {c.command} {' '.join(c.args)}")
+        else:
+            typer.echo(f"      {c.url}")
+        if c.description:
+            typer.echo(f"      {c.description}")
+
+
+@mcp_app.command("init")
+def mcp_init() -> None:
+    """Crea un mcp.json vacio con un servidor de ejemplo."""
+    from ovandocode.config import project_root
+    from ovandocode.mcp.config import default_config_path
+
+    path = default_config_path(project_root())
+    if path.exists():
+        typer.secho(f"[ERR] ya existe: {path}", fg="red")
+        raise typer.Exit(1)
+    content = (
+        "{\n"
+        '  "mcpServers": {\n'
+        '    "hello": {\n'
+        '      "transport": "stdio",\n'
+        '      "command": "uv",\n'
+        '      "args": ["run", "python", "scripts/mcp_hello_server.py"],\n'
+        '      "description": "Servidor MCP de ejemplo"\n'
+        "    }\n"
+        "  }\n"
+        "}\n"
+    )
+    path.write_text(content, encoding="utf-8")
+    typer.secho(f"[OK] creado: {path}", fg="green")
+
+
+@mcp_app.command("test")
+def mcp_test(
+    name: str = typer.Argument(None, help="Nombre del servidor (opcional, prueba todos)."),
+) -> None:
+    """Inicia los servidores MCP y lista sus tools."""
+    import asyncio
+    from ovandocode.config import project_root
+    from ovandocode.mcp.config import default_config_path, load_mcp_config
+    from ovandocode.mcp.manager import MCPManager
+
+    path = default_config_path(project_root())
+    configs = load_mcp_config(path)
+    if name:
+        configs = [c for c in configs if c.name == name]
+    if not configs:
+        typer.secho("[ERR] sin servidores MCP que probar", fg="red")
+        raise typer.Exit(1)
+
+    async def _go() -> None:
+        mgr = MCPManager(configs)
+        await mgr.start_all()
+        try:
+            if mgr.errors:
+                for srv, err in mgr.errors.items():
+                    typer.secho(f"[ERR] {srv}: {err}", fg="red")
+            for srv, client in mgr.clients.items():
+                typer.secho(f"== {srv} ({len(client.tools)} tools) ==", fg="cyan")
+                for t in client.tools:
+                    typer.echo(f"  * {t.name}: {getattr(t, 'description', '')[:70]}")
+        finally:
+            await mgr.stop_all()
+
+    asyncio.run(_go())
+
+
 def main() -> None:
+
     """Entrypoint principal (TUI en Fase 9)."""
     if len(sys.argv) == 1:
         typer.echo("OVANDOCODE - Fase 2 OK (TUI llega en Fase 9)")
