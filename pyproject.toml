@@ -49,6 +49,41 @@ asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py311"
 src = ["src"]
+exclude = [".venv", "build", "dist", "__pycache__"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "UP",  # pyupgrade
+    "C4",  # flake8-comprehensions
+]
+ignore = [
+    "E501",   # line-too-long (formatter lo maneja)
+    "B008",   # typer.Option() en defaults es intencional
+    "B904",   # raise ... from None es intencional
+    "E402",   # imports no al inicio (patron typer/CLI)
+    "F401",   # re-exports intencionales en __init__.py
+    "F841",   # variables de contexto sin usar
+    "C401",   # comprehensions vs set() -- trivial
+    "C416",   # comprehensions innecesarias -- trivial
+    "UP038",  # isinstance con tuple -> union syntax -- trivial
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011", "B017", "E402", "F401", "F841"]
+"src/ovandocode/cli.py" = ["B008", "E402"]
+"src/ovandocode/**/__init__.py" = ["F401"]
+"src/ovandocode/tools/*.py" = ["B008"]
+"src/ovandocode/providers/*.py" = ["B008"]
+"src/ovandocode/mcp/*.py" = ["B008"]
+"src/ovandocode/tui/*.py" = ["B008"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["ovandocode"]

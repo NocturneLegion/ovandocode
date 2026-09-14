@@ -95,6 +95,7 @@ def create_provider(
 
 
 __all__ = [
+    "REGISTRY",
     "AnthropicProvider",
     "BaseProvider",
     "ChatRequest",
@@ -114,7 +115,6 @@ __all__ = [
     "ProviderError",
     "ProviderRateLimitError",
     "ProviderResponseError",
-    "REGISTRY",
     "ToolCall",
     "Usage",
     "XAIProvider",

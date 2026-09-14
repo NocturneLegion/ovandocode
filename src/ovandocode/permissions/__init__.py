@@ -1,7 +1,7 @@
 """Sistema de permisos de OVANDOCODE."""
 from ovandocode.permissions.policy import (
-    DEFAULT_ALLOWLIST,
     DANGEROUS_PATTERNS,
+    DEFAULT_ALLOWLIST,
     Decision,
     PermissionPolicy,
     PermissionVerdict,
@@ -9,8 +9,8 @@ from ovandocode.permissions.policy import (
 )
 
 __all__ = [
-    "DEFAULT_ALLOWLIST",
     "DANGEROUS_PATTERNS",
+    "DEFAULT_ALLOWLIST",
     "Decision",
     "PermissionPolicy",
     "PermissionVerdict",

@@ -24,7 +24,7 @@ class MCPServerConfig:
     description: str = ""
 
     @classmethod
-    def from_dict(cls, name: str, d: dict) -> "MCPServerConfig":
+    def from_dict(cls, name: str, d: dict) -> MCPServerConfig:
         return cls(
             name=name,
             transport=d.get("transport", "stdio"),

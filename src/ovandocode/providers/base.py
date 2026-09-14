@@ -45,8 +45,9 @@ class BaseProvider(ABC):
     # ---------------- Ciclo de vida ----------------
     async def close(self) -> None:
         """Libera recursos (conexiones HTTP). Sobrescribir si aplica."""
+        return None
 
-    async def __aenter__(self) -> "BaseProvider":
+    async def __aenter__(self) -> BaseProvider:
         return self
 
     async def __aexit__(self, *exc: object) -> None:

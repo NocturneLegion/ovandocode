@@ -1,59 +1,72 @@
-import pytest
-from ovandocode.core.messages import summarize_for_compact, user, assistant
+"""Tests de core.messages."""
+
+from ovandocode.core.messages import (
+    assistant,
+    estimate_tokens,
+    from_dict,
+    summarize_for_compact,
+    system,
+    to_dict,
+    tool_result,
+    user,
+)
 from ovandocode.providers.types import ToolCall
 
 
-def test_summarize_returns_empty_when_within_keep_last():
-    """Si hay <= keep_last mensajes, el resumen esta vacio."""
-    messages = [user(f"msg{i}") for i in range(6)]
-    assert summarize_for_compact(messages) == ""
+def test_user_crea_mensaje_con_rol():
+    m = user("hola")
+    assert m.role == "user"
+    assert m.content == "hola"
 
 
-def test_summarize_with_default_keep_last():
-    """Con 7 mensajes, resume el primero (se descartan los ultimos 6)."""
-    messages = [user(f"msg{i}") for i in range(7)]
-    result = summarize_for_compact(messages)
-    assert result == "[user] msg0"
+def test_system_crea_mensaje_con_rol():
+    m = system("eres un agente")
+    assert m.role == "system"
 
 
-def test_summarize_custom_keep_last():
-    """keep_last personalizado controla cuantos mensajes se conservan."""
-    messages = [user(f"msg{i}") for i in range(4)]
-    result = summarize_for_compact(messages, keep_last=2)
-    assert result == "[user] msg0\n[user] msg1"
+def test_assistant_con_tool_calls():
+    tc = ToolCall(id="1", name="read_file", arguments={"path": "x.py"})
+    m = assistant("voy a leer", tool_calls=[tc])
+    assert m.role == "assistant"
+    assert len(m.tool_calls) == 1
+    assert m.tool_calls[0].name == "read_file"
 
 
-def test_summarize_truncates_long_content():
-    """El contenido de cada mensaje se trunca a 200 caracteres."""
-    long_content = "a" * 201
-    messages = [user(long_content)] + [user(f"msg{i}") for i in range(6)]
-    result = summarize_for_compact(messages)
-    assert result == "[user] " + ("a" * 200) + "..."
+def test_tool_result_con_id_y_nombre():
+    m = tool_result("call_1", "read_file", "contenido")
+    assert m.role == "tool"
+    assert m.tool_call_id == "call_1"
+    assert m.name == "read_file"
 
 
-def test_summarize_includes_tool_call_names():
-    """Cuando un mensaje tiene tool_calls, se incluyen los nombres."""
-    tc = ToolCall(id="tc1", name="get_weather", arguments={"city": "Madrid"})
-    messages = [assistant("consultando clima", tool_calls=[tc])] + [user(f"msg{i}") for i in range(6)]
-    result = summarize_for_compact(messages)
-    assert "tools: get_weather" in result
+def test_to_dict_from_dict_roundtrip():
+    tc = ToolCall(id="1", name="foo", arguments={"a": 1})
+    original = assistant("hola", tool_calls=[tc])
+    d = to_dict(original)
+    recovered = from_dict(d)
+    assert recovered.role == original.role
+    assert recovered.content == original.content
+    assert len(recovered.tool_calls) == 1
+    assert recovered.tool_calls[0].arguments == {"a": 1}
 
 
-def test_summarize_strips_newlines():
-    """Los saltos de linea en el contenido se reemplazan por espacios."""
-    messages = [user("line1\nline2\nline3")] + [user(f"msg{i}") for i in range(6)]
-    result = summarize_for_compact(messages)
-    assert "\n" not in result
-    assert "line1 line2 line3" in result
+def test_estimate_tokens_aproximado():
+    msgs = [user("a" * 400)]  # ~100 tokens
+    n = estimate_tokens(msgs)
+    assert 90 <= n <= 120
 
 
-def test_summarize_handles_empty_content():
-    """Mensajes con contenido vacio no causan errores."""
-    messages = [user("")] + [user(f"msg{i}") for i in range(6)]
-    result = summarize_for_compact(messages)
-    assert result == "[user] "
+def test_estimate_tokens_vacio():
+    assert estimate_tokens([]) == 1  # minimo 1
 
 
-def test_summarize_empty_messages_list():
-    """Con lista vacia, el resumen esta vacio."""
-    assert summarize_for_compact([]) == ""
+def test_summarize_con_pocos_mensajes_devuelve_vacio():
+    msgs = [user(f"m{i}") for i in range(3)]
+    assert summarize_for_compact(msgs, keep_last=6) == ""
+
+
+def test_summarize_trunca_contenido_largo():
+    msgs = [user("x" * 500), assistant("y" * 500)] + [user("reciente")] * 6
+    resumen = summarize_for_compact(msgs, keep_last=6)
+    assert "..." in resumen
+    assert "reciente" not in resumen

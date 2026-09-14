@@ -4,14 +4,14 @@ from __future__ import annotations
 from pathlib import Path
 
 from ovandocode.permissions import PermissionPolicy
-from ovandocode.tools.bash_tool import BashTool
 from ovandocode.tools.base import BaseTool, ToolError, ToolResult
+from ovandocode.tools.bash_tool import BashTool
 from ovandocode.tools.edit_file import EditFileTool
 from ovandocode.tools.glob_tool import GlobTool
 from ovandocode.tools.grep import GrepTool
 from ovandocode.tools.list_dir import ListDirTool
-from ovandocode.tools.mcp_tool import MCPTool
 from ovandocode.tools.load_skill import LoadSkillTool
+from ovandocode.tools.mcp_tool import MCPTool
 from ovandocode.tools.powershell_tool import PowerShellTool
 from ovandocode.tools.python_tool import PythonTool
 from ovandocode.tools.read_file import ReadFileTool
@@ -115,4 +115,4 @@ class ToolRegistry:
             await self.mcp_manager.stop_all()
             self.mcp_manager = None
 
-__all__ = ["BaseTool", "ToolError", "ToolRegistry", "ToolResult", "BUILTIN_TOOLS"]
+__all__ = ["BUILTIN_TOOLS", "BaseTool", "ToolError", "ToolRegistry", "ToolResult"]

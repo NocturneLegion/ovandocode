@@ -2,11 +2,9 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import sys
 from collections.abc import Callable
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from ovandocode.config import get_settings
@@ -22,12 +20,11 @@ from ovandocode.core.session import Session, SessionStore
 from ovandocode.permissions import Decision, PermissionPolicy
 from ovandocode.providers import create_provider
 from ovandocode.providers.base import BaseProvider
-from ovandocode.skills import SkillLoader
 from ovandocode.providers.types import (
     ChatRequest,
-    Message,
     ProviderError,
 )
+from ovandocode.skills import SkillLoader
 from ovandocode.tools import ToolRegistry
 
 
@@ -86,7 +83,7 @@ class Agent:
         self._provider: BaseProvider | None = None
 
     # ---------------- ciclo de vida ----------------
-    async def __aenter__(self) -> "Agent":
+    async def __aenter__(self) -> Agent:
         self._provider = create_provider(self.config.provider)
         await self.tools.async_setup_mcp()
         return self
@@ -170,7 +167,7 @@ class Agent:
         self.session.append(user(user_input))
 
         final_text = ""
-        for step_num in range(1, self.config.max_steps + 1):
+        for _step in range(1, self.config.max_steps + 1):
             self._maybe_compact()
 
             req = ChatRequest(
@@ -187,7 +184,7 @@ class Agent:
                     self._provider.chat(req),
                     timeout=self.config.provider_timeout,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 msg = (
                     f"[TIMEOUT] el proveedor no respondio en "
                     f"{self.config.provider_timeout}s. Intenta de nuevo o cambia de modelo."

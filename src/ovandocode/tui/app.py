@@ -1,12 +1,10 @@
 """TUI principal de OVANDOCODE (Textual)."""
 from __future__ import annotations
 
-import asyncio
-
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
+from textual.containers import Vertical
 from textual.widgets import Footer, Header, Input, RichLog, Static
 
 from ovandocode import __version__
@@ -16,7 +14,6 @@ from ovandocode.core import (
     AgentConfig,
     AgentEvents,
     SessionStore,
-    build_system_prompt,
 )
 from ovandocode.providers import REGISTRY, list_providers
 from ovandocode.skills import SkillLoader

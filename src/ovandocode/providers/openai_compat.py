@@ -15,7 +15,6 @@ from ovandocode.providers.base import BaseProvider
 from ovandocode.providers.types import (
     ChatRequest,
     ChatResponse,
-    Message,
     ProviderAuthError,
     ProviderConnectionError,
     ProviderRateLimitError,

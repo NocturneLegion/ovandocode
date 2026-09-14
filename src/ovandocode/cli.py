@@ -5,7 +5,6 @@ import asyncio
 import json
 import os
 import sys
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -72,10 +71,10 @@ def chat() -> None:
 @app.command()
 def run(
     prompt: str = typer.Argument(..., help="Tarea para el agente."),
-    provider: Optional[str] = typer.Option(None, "--provider", "-p"),
-    model: Optional[str] = typer.Option(None, "--model", "-m"),
+    provider: str | None = typer.Option(None, "--provider", "-p"),
+    model: str | None = typer.Option(None, "--model", "-m"),
     max_steps: int = typer.Option(30, "--max-steps"),
-    resume: Optional[str] = typer.Option(None, "--resume", "-r"),
+    resume: str | None = typer.Option(None, "--resume", "-r"),
     yolo: bool = typer.Option(False, "--yolo", help="Auto-aprobar shells."),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Solo la respuesta final."),
 ) -> None:
@@ -86,10 +85,10 @@ def run(
 @app.command()
 def headless(
     prompt: str = typer.Argument(..., help="Tarea (modo headless)."),
-    provider: Optional[str] = typer.Option(None, "--provider", "-p"),
-    model: Optional[str] = typer.Option(None, "--model", "-m"),
+    provider: str | None = typer.Option(None, "--provider", "-p"),
+    model: str | None = typer.Option(None, "--model", "-m"),
     max_steps: int = typer.Option(30, "--max-steps"),
-    resume: Optional[str] = typer.Option(None, "--resume", "-r"),
+    resume: str | None = typer.Option(None, "--resume", "-r"),
     yolo: bool = typer.Option(True, "--yolo/--no-yolo"),
     json_out: bool = typer.Option(False, "--json", help="Salida JSON."),
 ) -> None:
@@ -112,10 +111,10 @@ def headless(
 
 def _run_one_shot(
     prompt: str,
-    provider: Optional[str],
-    model: Optional[str],
+    provider: str | None,
+    model: str | None,
     max_steps: int,
-    resume: Optional[str],
+    resume: str | None,
     yolo: bool,
     quiet: bool,
     return_result: bool = False,
@@ -234,8 +233,8 @@ def config_providers() -> None:
 @config_app.command("set-key")
 def config_set_key(
     provider: str = typer.Argument(...),
-    value: Optional[str] = typer.Option(None, "--value", "-v"),
-    from_env: Optional[str] = typer.Option(None, "--from-env"),
+    value: str | None = typer.Option(None, "--value", "-v"),
+    from_env: str | None = typer.Option(None, "--from-env"),
     from_stdin: bool = typer.Option(False, "--stdin"),
     backend: str = typer.Option("keyring", "--backend", "-b"),
     force: bool = typer.Option(False, "--force", "-f"),
@@ -300,7 +299,7 @@ def providers_list() -> None:
 @providers_app.command("ping")
 def providers_ping(
     provider: str = typer.Argument(...),
-    model: Optional[str] = typer.Option(None, "--model", "-m"),
+    model: str | None = typer.Option(None, "--model", "-m"),
 ) -> None:
     """Envia un prompt trivial para verificar conectividad."""
     from ovandocode.config import get_settings
@@ -666,7 +665,7 @@ def mcp_init() -> None:
 
 @mcp_app.command("test")
 def mcp_test(
-    name: Optional[str] = typer.Argument(None),
+    name: str | None = typer.Argument(None),
 ) -> None:
     """Prueba los servidores MCP listando sus tools."""
     from ovandocode.config import project_root

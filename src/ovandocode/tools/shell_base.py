@@ -4,7 +4,6 @@ from __future__ import annotations
 import asyncio
 import os
 import time
-from pathlib import Path
 from typing import Any
 
 from ovandocode.tools.base import BaseTool, ToolError, ToolResult
@@ -48,7 +47,7 @@ class ShellTool(BaseTool):
         timed_out = False
         try:
             stdout_b, stderr_b = await asyncio.wait_for(proc.communicate(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             timed_out = True
             try:
                 proc.kill()

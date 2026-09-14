@@ -1,8 +1,6 @@
 """Proveedor OpenRouter (agregador de modelos)."""
 from __future__ import annotations
 
-from typing import Any
-
 from ovandocode.providers.openai_compat import OpenAICompatProvider
 
 

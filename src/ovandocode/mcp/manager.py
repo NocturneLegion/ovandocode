@@ -34,7 +34,7 @@ class MCPManager:
         try:
             await asyncio.wait_for(client.start(), timeout=self.start_timeout)
             self._clients[cfg.name] = client
-        except (asyncio.TimeoutError, MCPClientError, Exception) as e:
+        except (TimeoutError, MCPClientError, Exception) as e:
             self._errors[cfg.name] = str(e)
             await client.stop()
 
