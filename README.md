@@ -13,6 +13,23 @@ Un agente que vive en tu terminal y puede:
 - **Conectar a servidores MCP** para herramientas externas.
 - **Usar cualquier LLM** (OpenRouter, OpenAI, Anthropic, Gemini, Groq, DeepSeek, Mistral, xAI, Ollama, LM Studio).
 
+## Documentacion
+
+La guia completa esta en **[docs/GUIA.md](docs/GUIA.md)**. Secciones principales:
+
+| Guia | Descripcion |
+|---|---|
+| [Instalacion](docs/instalacion.md) | Requisitos, uv, instalacion global, primer arranque |
+| [Configuracion](docs/configuracion.md) | .env, config.toml, keyring, variables |
+| [Proveedores](docs/proveedores.md) | Los 10 proveedores LLM soportados |
+| [Permisos](docs/permisos.md) | Control de ejecucion de comandos |
+| [Herramientas](docs/herramientas.md) | Las 10 tools built-in del agente |
+| [Skills](docs/skills.md) | Crear skills personalizadas |
+| [MCP](docs/mcp.md) | Conectar servidores MCP externos |
+| [Interfaz](docs/interfaz.md) | TUI y CLI (one-shot y headless) |
+| [Sesiones](docs/sesiones.md) | Historial, reanudar, auto-compactacion |
+| [Troubleshooting](docs/troubleshooting.md) | Errores comunes y soluciones |
+
 ## Instalacion
 
 ### Requisitos
