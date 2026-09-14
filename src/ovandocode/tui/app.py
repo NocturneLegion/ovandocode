@@ -1,6 +1,8 @@
 """TUI principal de OVANDOCODE (Textual)."""
 from __future__ import annotations
 
+import pathlib
+
 from textual import work
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -50,6 +52,7 @@ class OvandoCodeApp(App):
         self.agent: Agent | None = None
         self.session = None
         self.store = SessionStore(sessions_dir())
+        self._project_root: str = str(pathlib.Path.cwd().resolve())
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -63,6 +66,7 @@ class OvandoCodeApp(App):
     async def on_mount(self) -> None:
         log = self.query_one("#chat", RichLog)
         log.write(f"[bold cyan]OVANDOCODE[/] v{__version__}")
+        log.write(f"Proyecto:  [bold yellow]{self._project_root}[/]")
         log.write(f"Proveedor: [yellow]{self.agent_config.provider}[/]")
         log.write(f"Modelo:    [yellow]{self.agent_config.model}[/]")
         log.write("")
@@ -410,12 +414,22 @@ class OvandoCodeApp(App):
     def _update_status(self) -> None:
         if self.session is None:
             return
+        # Ruta del proyecto (truncada si es muy larga para el status bar)
+        root = self._project_root
+        if len(root) > 55:
+            root = "..." + root[-52:]
         s = (
-            f" {self.agent_config.provider}/{self.agent_config.model}"
-            f" | sesion: {self.session.id[:20]}"
-            f" | msgs: {len(self.session.messages)}"
+            f" {root}"
+            f"  |  {self.agent_config.provider}/{self.agent_config.model}"
+            f"  |  msgs: {len(self.session.messages)}"
         )
         self.query_one("#status", Static).update(s)
+
+        # Actualizar titulo de la ventana del terminal
+        try:
+            self.sub_title = f"v{__version__} - {pathlib.Path(self._project_root).name}"
+        except Exception:
+            pass
 
 
 def run_tui(agent_config: AgentConfig | None = None) -> None:
