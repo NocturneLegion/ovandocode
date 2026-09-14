@@ -5,12 +5,22 @@ build-backend = "hatchling.build"
 [project]
 name = "ovandocode"
 version = "0.1.0"
-description = "OVANDOCODE - Agente de codificacion autonomo"
+description = "OVANDOCODE - Agente de codificacion autonomo con TUI, MCP, skills y multi-proveedor LLM"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
-authors = [{ name = "OvandoCode" }]
-keywords = ["ai", "agent", "coding", "tui", "mcp", "llm"]
+authors = [{ name = "Jorge Luis Ovando", email = "ovandocode@localhost" }]
+keywords = ["ai", "agent", "coding", "tui", "mcp", "llm", "cli", "openrouter"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Code Generators",
+]
 
 dependencies = [
     "textual>=0.83.0",
@@ -41,6 +51,10 @@ dev = [
 [project.scripts]
 ovandocode = "ovandocode.cli:main"
 
+[project.urls]
+Homepage = "https://github.com/ovandocode/ovandocode"
+Repository = "https://github.com/ovandocode/ovandocode"
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/ovandocode"]
 
@@ -52,28 +66,19 @@ testpaths = ["tests"]
 line-length = 120
 target-version = "py311"
 src = ["src"]
-exclude = [".venv", "build", "dist", "__pycache__"]
+exclude = [".venv", "build", "dist", "__pycache__", "sessions", "logs"]
 
 [tool.ruff.lint]
-select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # pyflakes
-    "I",   # isort
-    "B",   # flake8-bugbear
-    "UP",  # pyupgrade
-    "C4",  # flake8-comprehensions
-]
+select = ["E", "W", "F", "I", "B", "UP", "C4"]
 ignore = [
-    "E501",   # line-too-long (formatter lo maneja)
-    "B008",   # typer.Option() en defaults es intencional
-    "B904",   # raise ... from None es intencional
-    "E402",   # imports no al inicio (patron typer/CLI)
-    "F401",   # re-exports intencionales en __init__.py
-    "F841",   # variables de contexto sin usar
-    "C401",   # comprehensions vs set() -- trivial
-    "C416",   # comprehensions innecesarias -- trivial
-    "UP038",  # isinstance con tuple -> union syntax -- trivial
+    "E501",
+    "B008",
+    "B904",
+    "E402",
+    "F401",
+    "F841",
+    "C401",
+    "C416",
 ]
 
 [tool.ruff.lint.per-file-ignores]
