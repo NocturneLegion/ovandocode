@@ -40,3 +40,10 @@ _gen*.py
 _test_*.py
 HOLA.md
 *.tmp
+
+# Secrets extras (por si acaso)
+*.key
+*.pem
+secrets.json
+credentials.json
+service-account.json
