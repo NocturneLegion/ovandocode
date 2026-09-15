@@ -1,8 +1,8 @@
+﻿from .widgets import CredentialsScreen, CredentialsListScreen
 """TUI principal de OVANDOCODE (Textual)."""
 from __future__ import annotations
 
 import pathlib
-import re
 
 from textual import work
 from textual.app import App, ComposeResult
@@ -20,11 +20,7 @@ from ovandocode.core import (
 )
 from ovandocode.providers import REGISTRY, list_providers
 from ovandocode.skills import SkillLoader
-from ovandocode.tui.widgets import (
-    PermissionScreen,
-    PickerScreen,
-    ProviderPickerScreen,
-)
+from ovandocode.tui.widgets import PermissionScreen, PickerScreen
 
 HELP_TEXT = """[bold]Comandos disponibles[/]
   /help              Muestra esta ayuda
@@ -32,17 +28,10 @@ HELP_TEXT = """[bold]Comandos disponibles[/]
   /clear             Nueva sesion (limpia el chat)
   /session           Info de la sesion actual
   /model [nombre]    Abre selector de modelos (o directo si pasas nombre)
-  /provider [nombre] Abre selector de proveedores (o directo si pasas nombre)
+  /provider [nombre] Abre selector de proveedores (o directo)
   /skills            Lista skills disponibles
   /mcp               Estado de los servidores MCP
   /tools             Lista herramientas activas
-
-[bold]Atajos[/]
-  Ctrl+Shift+C       Copiar todo el chat al portapapeles
-  Ctrl+Shift+V       Pegar en el input
-  Ctrl+L             Limpiar chat
-  Ctrl+N             Nueva sesion
-  Ctrl+C             Salir
 """
 
 
@@ -56,8 +45,6 @@ class OvandoCodeApp(App):
         Binding("ctrl+c", "quit", "Salir", priority=True),
         Binding("ctrl+l", "clear_chat", "Limpiar"),
         Binding("ctrl+n", "new_session", "Nueva sesion"),
-        Binding("ctrl+shift+c", "copy_chat", "Copiar chat", show=True),
-        Binding("ctrl+shift+v", "paste_input", "Pegar", show=True),
     ]
 
     def __init__(self, agent_config: AgentConfig) -> None:
@@ -67,7 +54,6 @@ class OvandoCodeApp(App):
         self.session = None
         self.store = SessionStore(sessions_dir())
         self._project_root: str = str(pathlib.Path.cwd().resolve())
-        self._chat_buffer: list[str] = []  # buffer de texto plano para copiar
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -119,13 +105,6 @@ class OvandoCodeApp(App):
     def _log(self) -> RichLog:
         return self.query_one("#chat", RichLog)
 
-    def _write_log(self, text: str) -> None:
-        """Escribe en el RichLog y guarda una version texto-plano en el buffer."""
-        self._log().write(text)
-        # Eliminar markup tipo [bold red]...[/] para el buffer de copia
-        plain = re.sub(r"\[/?[a-zA-Z0-9_# .]+\]", "", text)
-        self._chat_buffer.append(plain)
-
     def _ev_assistant_text(self, text: str) -> None:
         log = self._log()
         log.write(f"[bold cyan]Agent:[/] {text}")
@@ -135,20 +114,20 @@ class OvandoCodeApp(App):
         preview = str(args)
         if len(preview) > 120:
             preview = preview[:120] + "..."
-        self._write_log(f"[dim]  >> {name} {preview}[/]")
+        self._log().write(f"[dim]  >> {name} {preview}[/]")
 
     def _ev_tool_result(self, name: str, ok: bool, content: str) -> None:
         color = "green" if ok else "red"
         preview = content.replace("\n", " ")
         if len(preview) > 240:
             preview = preview[:240] + "..."
-        self._write_log(f"[dim {color}]  << {name}: {preview}[/]")
+        self._log().write(f"[dim {color}]  << {name}: {preview}[/]")
 
     def _ev_error(self, msg: str) -> None:
-        self._write_log(f"[bold red]{msg}[/]")
+        self._log().write(f"[bold red]{msg}[/]")
 
     def _ev_compact(self, before: int, after: int) -> None:
-        self._write_log(
+        self._log().write(
             f"[dim yellow]  [compact] {before} -> {after} mensajes[/]"
         )
 
@@ -166,8 +145,8 @@ class OvandoCodeApp(App):
             self._handle_slash(text)  # @work -> corre en worker
             return
 
-        self._write_log(f"[bold green]Tu:[/] {text}")
-        self._write_log("")
+        self._log().write(f"[bold green]Tu:[/] {text}")
+        self._log().write("")
         self._run_agent(text)
 
     @work(exclusive=True)
@@ -177,7 +156,7 @@ class OvandoCodeApp(App):
             assert self.agent is not None
             await self.agent.step(text)
         except Exception as e:
-            self._write_log(f"[bold red]Error fatal: {type(e).__name__}: {e}[/]")
+            self._log().write(f"[bold red]Error fatal: {type(e).__name__}: {e}[/]")
         finally:
             self._update_status()
 
@@ -191,12 +170,12 @@ class OvandoCodeApp(App):
         if cmd in ("q", "quit", "exit"):
             self.exit()
         elif cmd == "help":
-            self._write_log(HELP_TEXT)
+            self._log().write(HELP_TEXT)
         elif cmd == "clear":
             self.action_new_session()
         elif cmd == "session":
             if self.session:
-                self._write_log(
+                self._log().write(
                     f"[bold]Sesion actual[/]\n"
                     f"  id:       {self.session.id}\n"
                     f"  provider: {self.session.provider}\n"
@@ -219,70 +198,34 @@ class OvandoCodeApp(App):
             loader = SkillLoader(project_root=self.agent.tools.project_root if self.agent else None)
             skills = loader.all()
             if not skills:
-                self._write_log("(sin skills)")
+                self._log().write("(sin skills)")
             else:
-                self._write_log(f"[bold]{len(skills)} skill(s):[/]")
+                self._log().write(f"[bold]{len(skills)} skill(s):[/]")
                 for s in skills:
                     origen = "builtin" if s.builtin else "proyecto"
-                    self._write_log(f"  [{origen}] {s.name} - {s.description[:60]}")
+                    self._log().write(f"  [{origen}] {s.name} - {s.description[:60]}")
         elif cmd == "mcp":
             if self.agent and self.agent.tools.mcp_manager:
                 mgr = self.agent.tools.mcp_manager
-                self._write_log(f"[bold]MCP activos:[/] {mgr.running_count}")
+                self._log().write(f"[bold]MCP activos:[/] {mgr.running_count}")
                 for srv, client in mgr.clients.items():
-                    self._write_log(f"  {srv}: {len(client.tools)} tools")
+                    self._log().write(f"  {srv}: {len(client.tools)} tools")
                 for srv, err in mgr.errors.items():
-                    self._write_log(f"  [red]{srv}: {err}[/]")
+                    self._log().write(f"  [red]{srv}: {err}[/]")
             else:
-                self._write_log("(sin servidores MCP activos)")
+                self._log().write("(sin servidores MCP activos)")
         elif cmd == "tools":
             if self.agent:
                 names = self.agent.tools.names()
-                self._write_log(f"[bold]{len(names)} herramientas activas:[/]")
+                self._log().write(f"[bold]{len(names)} herramientas activas:[/]")
                 for n in names:
-                    self._write_log(f"  * {n}")
+                    self._log().write(f"  * {n}")
         else:
-            self._write_log(f"[red]Comando desconocido:[/] /{cmd}. Usa /help.")
+            self._log().write(f"[red]Comando desconocido:[/] /{cmd}. Usa /help.")
 
     # ---------------- acciones ----------------
-    def action_copy_chat(self) -> None:
-        """Copia todo el contenido del chat al portapapeles."""
-        if not self._chat_buffer:
-            self.notify("El chat esta vacio", timeout=2)
-            return
-        text = "\n".join(self._chat_buffer)
-        try:
-            self.copy_to_clipboard(text)
-            self.notify(
-                f"Copiado al portapapeles ({len(self._chat_buffer)} lineas)",
-                timeout=2,
-            )
-        except Exception as e:
-            self.notify(f"No se pudo copiar: {e}", severity="error")
-
-    async def action_paste_input(self) -> None:
-        """Pega el contenido del portapapeles en el input."""
-        try:
-            text = await self.get_clipboard()
-        except Exception as e:
-            self.notify(f"No se pudo leer el portapapeles: {e}", severity="error")
-            return
-        if not text:
-            self.notify("Portapapeles vacio", timeout=2)
-            return
-        inp = self.query_one("#input", Input)
-        # Reemplazar saltos de linea por espacios (Input es de una sola linea)
-        clean = text.replace("\r\n", " ").replace("\n", " ").replace("\r", " ")
-        inp.value = (inp.value or "") + clean
-        try:
-            inp.cursor_position = len(inp.value)
-        except Exception:
-            pass
-        inp.focus()
-
     def action_clear_chat(self) -> None:
         self.query_one("#chat", RichLog).clear()
-        self._chat_buffer.clear()
 
     def action_new_session(self) -> None:
         log = self._log()
@@ -324,7 +267,7 @@ class OvandoCodeApp(App):
         provider = self.agent_config.provider
         current = self.agent_config.model
 
-        self._write_log(f"[dim]Obteniendo modelos de {provider}...[/]")
+        self._log().write(f"[dim]Obteniendo modelos de {provider}...[/]")
 
         cache = ModelsCache()
         models: list[str] | None = cache.get(provider)
@@ -337,12 +280,12 @@ class OvandoCodeApp(App):
                 if models:
                     cache.set(provider, models)
             except Exception as e:
-                self._write_log(f"[red]No se pudieron obtener modelos: {e}[/]")
-                self._write_log("[yellow]Puedes escribir el modelo directo con: /model <nombre>[/]")
+                self._log().write(f"[red]No se pudieron obtener modelos: {e}[/]")
+                self._log().write("[yellow]Puedes escribir el modelo directo con: /model <nombre>[/]")
                 return
 
         if not models:
-            self._write_log(f"[yellow](sin modelos para {provider})[/]")
+            self._log().write(f"[yellow](sin modelos para {provider})[/]")
             return
 
         items = [(m, m) for m in models]
@@ -366,23 +309,27 @@ class OvandoCodeApp(App):
         # Recargar el agente con el nuevo modelo
         await self._reload_agent()
 
-        self._write_log(f"[green]Modelo cambiado a:[/] {model}")
+        self._log().write(f"[green]Modelo cambiado a:[/] {model}")
         self._update_status()
         await self._maybe_persist("default_model", model)
 
     async def _pick_provider(self) -> None:
-        """Abre el selector de proveedores con estado de keys."""
-        result = await self.push_screen_wait(
-            ProviderPickerScreen(active=self.agent_config.provider)
-        )
-        if result is None:
-            return
+        """Abre el selector de proveedores."""
+        from ovandocode.providers import list_providers
 
-        action, pid = result
-        if action == "switch" and pid:
-            await self._change_provider(pid)
-        elif action == "configure":
-            await self._open_credentials_editor(provider=pid, then_switch=True)
+        providers = list_providers()
+        items = [(p, p) for p in providers]
+        result = await self.push_screen_wait(
+            PickerScreen(
+                title="Proveedores disponibles",
+                subtitle="Elige uno para cambiar el LLM",
+                items=items,
+                current=self.agent_config.provider,
+                searchable=False,
+            )
+        )
+        if result:
+            await self._change_provider(result)
 
     async def _change_provider(self, provider: str) -> None:
         """Aplica un cambio de proveedor + persiste si se pide."""
@@ -390,17 +337,17 @@ class OvandoCodeApp(App):
         from ovandocode.providers import REGISTRY
 
         if provider not in REGISTRY:
-            self._write_log(f"[red]Proveedor desconocido: {provider}[/]")
+            self._log().write(f"[red]Proveedor desconocido: {provider}[/]")
             return
 
         cls = REGISTRY[provider]
         if cls.requires_api_key:
             key = get_credentials().get(provider)
             if not key:
-                self._write_log(
+                self._log().write(
                     f"[yellow]El proveedor {provider} requiere API key.[/]"
                 )
-                self._write_log(
+                self._log().write(
                     f"[dim]Ejecuta fuera de la TUI: ovandocode config set-key {provider}[/]"
                 )
                 return
@@ -412,8 +359,8 @@ class OvandoCodeApp(App):
         # Reintentar con el modelo por defecto del proveedor
         await self._reload_agent()
 
-        self._write_log(f"[green]Proveedor cambiado a:[/] {provider}")
-        self._write_log(f"[dim]Modelo actual: {self.agent_config.model}[/]")
+        self._log().write(f"[green]Proveedor cambiado a:[/] {provider}")
+        self._log().write(f"[dim]Modelo actual: {self.agent_config.model}[/]")
         self._update_status()
         await self._maybe_persist("default_provider", provider)
 
@@ -461,31 +408,9 @@ class OvandoCodeApp(App):
         gc = GlobalConfig()
         try:
             gc.set(key, value)
-            self._write_log(f"[green]Guardado en config.toml:[/] {key} = {value!r}")
+            self._log().write(f"[green]Guardado en config.toml:[/] {key} = {value!r}")
         except GlobalConfigError as e:
-            self._write_log(f"[red]No se pudo guardar: {e}[/]")
-
-    async def _open_credentials_editor(
-        self,
-        provider: str | None = None,
-        then_switch: bool = False,
-    ) -> None:
-        """Abre el editor de API key.
-
-        Args:
-            provider: proveedor preseleccionado (o None para el primero).
-            then_switch: si es True, cambia al proveedor tras guardar la key.
-        """
-        from ovandocode.tui.widgets.credentials import CredentialsScreen
-
-        result = await self.push_screen_wait(CredentialsScreen(provider=provider))
-
-        if not isinstance(result, dict):
-            return
-
-        saved_provider = result.get("provider")
-        if then_switch and saved_provider:
-            await self._change_provider(saved_provider)
+            self._log().write(f"[red]No se pudo guardar: {e}[/]")
 
     def _update_status(self) -> None:
         if self.session is None:

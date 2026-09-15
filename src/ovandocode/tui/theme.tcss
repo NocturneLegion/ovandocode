@@ -1,53 +1,139 @@
+/* Tema Oscuro para OvandoCode */
+
 Screen {
     background: $surface;
+    color: $text;
 }
 
-#chat {
-    background: $panel;
-    border: round $primary;
-    padding: 0 1;
-    margin: 1;
+#header {
+    background: $primary-background;
+    color: $text;
 }
 
-#input {
-    dock: bottom;
-    margin: 0 1 1 1;
-    border: round $accent;
-}
-
-#status {
-    dock: bottom;
-    height: 1;
+#footer {
     background: $boost;
     color: $text-muted;
-    padding: 0 1;
 }
 
-#perm-dialog {
+#chat-history {
     background: $surface;
-    border: thick $warning;
-    padding: 1 2;
-    width: 70;
+    color: $text;
+}
+
+#command-input {
+    background: $boost;
+    color: $text;
+}
+
+/* Modal de Credenciales */
+#creds-modal, #creds-list-modal {
+    align: center middle;
+    width: 60;
     height: auto;
+    max-height: 80%;
+    background: $surface;
+    border: thick $primary;
+    padding: 1 2;
+}
+
+#creds-title, #list-title {
+    text-align: center;
+    text-style: bold;
+    color: $text;
+    margin-bottom: 1;
+}
+
+#provider-select, #api-key-input {
+    width: 100%;
+    margin-bottom: 1;
+}
+
+#creds-buttons, #list-buttons {
+    align: center middle;
+    margin-top: 1;
+}
+
+.provider-item-configured {
+    background: #004400;
+    color: #00ff00;
+    padding: 0 1;
+    margin: 1 0;
+}
+
+.provider-item-missing {
+    background: #440000;
+    color: #ff5555;
+    padding: 0 1;
+    margin: 1 0;
+}
+
+#list-hint {
+    text-align: center;
+    color: $text-muted;
+    margin: 1 0;
+}
+
+/* ---------- Provider picker ---------- */
+#prov-picker {
+    background: $surface;
+    border: thick $accent;
+    padding: 1 2;
+    width: 80%;
+    max-width: 110;
+    max-height: 80%;
     align: center middle;
 }
 
-#perm-title {
+#prov-title {
     text-style: bold;
-    color: $warning;
+    color: $accent;
     padding-bottom: 1;
 }
 
-#perm-cmd {
-    color: $text;
-    padding-bottom: 1;
-}
-
-#perm-reason {
+#prov-hint {
     color: $text-muted;
     padding-bottom: 1;
 }
 
+#prov-scroll {
+    height: 1fr;
+    min-height: 10;
+    max-height: 22;
+    border: round $primary;
+    padding: 0 1;
+    background: $panel;
+}
+
+#prov-list {
+    height: auto;
+}
+
+.prov-item {
+    color: $text;
+    padding: 0 1;
+}
+
+.prov-ok {
+    color: $success;
+}
+
+.prov-missing {
+    color: $error;
+}
+
+.prov-local {
+    color: $text-muted;
+}
+
+.prov-active {
+    text-style: bold;
+    background: $boost;
+}
+
+#prov-buttons {
+    align: center middle;
+    margin-top: 1;
+}
 
 /* ---------- Picker modal ---------- */
 #picker-dialog {
@@ -55,30 +141,30 @@ Screen {
     border: thick $accent;
     padding: 1 2;
     width: 80%;
-    max-width: 100;
-    max-height: 80%;
+    max-width: 110;
+    height: 80%;
     align: center middle;
 }
 
 #picker-title {
     text-style: bold;
     color: $accent;
-    padding-bottom: 1;
+    height: 1;
 }
 
 #picker-subtitle {
     color: $text-muted;
-    padding-bottom: 1;
+    height: 1;
 }
 
 #picker-search {
     margin-bottom: 1;
+    height: 3;
 }
 
 #picker-scroll {
     height: 1fr;
-    min-height: 8;
-    max-height: 20;
+    min-height: 5;
     border: round $primary;
     padding: 0 1;
     background: $panel;
@@ -86,19 +172,17 @@ Screen {
 
 #picker-list {
     height: auto;
+    width: 100%;
 }
 
-.picker-item {
-    color: $text;
-}
-
-.picker-selected {
-    color: $accent;
-    text-style: bold;
-    background: $boost;
-}
-
-.picker-empty {
+#picker-counter {
+    height: 1;
     color: $text-muted;
-    text-style: italic;
+    text-align: right;
+}
+
+#picker-buttons {
+    align: center middle;
+    height: 3;
+    margin-top: 1;
 }
