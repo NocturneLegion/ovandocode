@@ -202,5 +202,3 @@ src/ovandocode/
 ## Licencia
 
 MIT - ver [LICENSE](LICENSE).
-
-<!-- test -->
