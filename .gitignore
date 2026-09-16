@@ -47,3 +47,8 @@ HOLA.md
 secrets.json
 credentials.json
 service-account.json
+
+# Scaffolding / scripts de desarrollo (no forman parte del producto)
+_*.ps1
+_*.py
+*.bak
