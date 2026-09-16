@@ -52,3 +52,8 @@ service-account.json
 _*.ps1
 _*.py
 *.bak
+
+# Scripts de desarrollo / scaffolding (solo install.ps1 va al repo)
+*.ps1
+!install.ps1
+
