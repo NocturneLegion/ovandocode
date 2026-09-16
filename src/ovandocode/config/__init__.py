@@ -1,9 +1,9 @@
 """Configuracion, rutas y credenciales de OVANDOCODE."""
 from ovandocode.config.config_writer import (
     DEFAULT_PERSISTED_FIELDS,
+    PERSISTABLE_FIELDS,
     GlobalConfig,
     GlobalConfigError,
-    PERSISTABLE_FIELDS,
 )
 from ovandocode.config.credentials import (
     CredentialManager,

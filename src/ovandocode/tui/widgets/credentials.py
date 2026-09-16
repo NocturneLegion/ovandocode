@@ -54,7 +54,7 @@ async def validate_api_key(provider: str, api_key: str, timeout: float = 15.0) -
                 return True, "key valida"
             except Exception:
                 return True, "key aceptada (no se pudo validar del todo)"
-    except asyncio.TimeoutError:
+    except TimeoutError:
         return False, f"timeout despues de {timeout}s validando la key"
     except Exception as e:
         # Extraer codigo HTTP si esta

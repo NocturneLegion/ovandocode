@@ -387,7 +387,6 @@ class OvandoCodeApp(App):
     async def _change_provider(self, provider: str) -> None:
         """Aplica un cambio de proveedor + persiste si se pide."""
         from ovandocode.config import get_credentials
-        from ovandocode.providers import REGISTRY
 
         if provider not in REGISTRY:
             self._write_log(f"[red]Proveedor desconocido: {provider}[/]")
