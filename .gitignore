@@ -50,7 +50,7 @@ service-account.json
 
 # Scaffolding / scripts de desarrollo (no forman parte del producto)
 _*.ps1
-_*.py
+!**/__init__.py
 *.bak
 
 # Scripts de desarrollo / scaffolding (solo install.ps1 va al repo)
