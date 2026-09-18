@@ -4,6 +4,25 @@ Todas las versiones notables de OVANDOCODE.
 
 El formato sigue Keep a Changelog y este proyecto usa Semantic Versioning.
 
+## [0.2.1] - 2026-09-18
+
+Version de mantenimiento. Corrige el bug critico de reanudado de sesiones.
+
+### Corregido
+
+- **`sessions resume` no funciona**: `on_mount` pisaba la sesion precargada
+  creando siempre una nueva. Ahora respeta la sesion cargada por el CLI
+  y sincroniza el provider/model del agent_config con los de la sesion.
+- **Historial no se redibujaba al reanudar**: `_redraw_history` no se
+  invocaba porque la sesion quedaba vacia tras pisarla. Ahora se ve todo
+  el historial al abrir la TUI.
+
+### Anadido
+
+- **Comando `/history`**: redibuja el historial en el chat bajo demanda.
+- **Redibujado automatico**: al reanudar una sesion, el historial previo
+  se muestra al arrancar la TUI.
+
 ## [0.2.0] - 2026-09-14
 
 Segunda version. Foco en la experiencia de usuario en la TUI, gestion de credenciales
@@ -74,3 +93,5 @@ Primera version funcional. Agente de codificacion autonomo para terminal.
 - Alternativa recomendada: groq con openai/gpt-oss-120b (gratis y muy rapido).
 
 [0.2.0]: https://github.com/NocturneLegion/ovandocode/releases/tag/v0.2.0
+
+[0.2.1]: https://github.com/NocturneLegion/ovandocode/releases/tag/v0.2.1
