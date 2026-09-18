@@ -5,49 +5,48 @@ title: OVANDOCODE
 
 # OVANDOCODE
 
-> Agente de codificación autónomo para terminal. TUI moderna, multi-proveedor LLM, MCP, skills y ejecución segura de shell.
+> Agente de codificacion autonomo para terminal. TUI moderna, multi-proveedor LLM, MCP, skills y ejecucion segura de shell.
 
-## 🚀 Instalación rápida
+## Instalacion rapida
 
 ```powershell
 uv tool install git+https://github.com/NocturneLegion/ovandocode.git
 ovandocode --version
+```
 
-📚 Documentación
-Sección	Descripción
-Instalación	Requisitos, uv, primer arranque
-Configuración	.env, config.toml, keyring
-Proveedores	10 proveedores LLM soportados
-Permisos	Control de ejecución de comandos
-Herramientas	Las 10 tools built-in
-Skills	Crear skills personalizadas
-MCP	Servidores MCP externos
-Interfaz	TUI y CLI
-Sesiones	Historial y reanudar
-Troubleshooting	Errores comunes
-O ve a la guía completa.
+## Documentacion
 
-🎯 Features
-10 proveedores LLM: OpenRouter, OpenAI, Anthropic, Gemini, Groq, DeepSeek, Mistral, xAI, Ollama, LM Studio
+| Seccion | Descripcion |
+|---|---|
+| [Instalacion](instalacion.html) | Requisitos, uv, primer arranque |
+| [Configuracion](configuracion.html) | .env, config.toml, keyring |
+| [Proveedores](proveedores.html) | 10 proveedores LLM soportados |
+| [Permisos](permisos.html) | Control de ejecucion de comandos |
+| [Herramientas](herramientas.html) | Las 10 tools built-in |
+| [Skills](skills.html) | Crear skills personalizadas |
+| [MCP](mcp.html) | Servidores MCP externos |
+| [Interfaz](interfaz.html) | TUI y CLI |
+| [Sesiones](sesiones.html) | Historial y reanudar |
+| [Troubleshooting](troubleshooting.html) | Errores comunes |
 
-10 herramientas built-in: filesystem, shell, web
+O ve a la [guia completa](GUIA.html).
 
-Sistema de skills: instrucciones especializadas por dominio
+## Features
 
-MCP: conexión a servidores externos
+- **10 proveedores LLM**: OpenRouter, OpenAI, Anthropic, Gemini, Groq, DeepSeek, Mistral, xAI, Ollama, LM Studio
+- **10 herramientas built-in**: filesystem, shell, web
+- **Sistema de skills**: instrucciones especializadas por dominio
+- **MCP**: conexion a servidores externos
+- **TUI interactiva**: config desde la interfaz, copiar/pegar, redibujar historial
+- **Sesiones persistentes**: reanudar conversaciones
+- **Configuracion global**: config.toml en AppData
 
-TUI interactiva: config desde la interfaz, copiar/pegar, redibujar historial
+## Repositorio
 
-Sesiones persistentes: reanudar conversaciones
+- **GitHub**: https://github.com/NocturneLegion/ovandocode
+- **Releases**: https://github.com/NocturneLegion/ovandocode/releases
+- **Issues**: https://github.com/NocturneLegion/ovandocode/issues
 
-Configuración global: config.toml en %APPDATA%
+## Licencia
 
-📦 Repositorio
-GitHub: https://github.com/NocturneLegion/ovandocode
-
-Releases: https://github.com/NocturneLegion/ovandocode/releases
-
-Issues: https://github.com/NocturneLegion/ovandocode/issues
-
-📄 Licencia
 MIT
