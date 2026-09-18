@@ -407,6 +407,10 @@ OVANDOCODE_REQUEST_TIMEOUT=300.0
 
 ## Siguiente paso
 
-- [Permisos](permisos.md) — control de ejecución de comandos
-- [Herramientas](herramientas.md) — lista de tools disponibles
-- [Solución de problemas](troubleshooting.md)
+- [Permisos](permisos.html) — control de ejecución de comandos
+- [Herramientas](herramientas.html) — lista de tools disponibles
+- [Solución de problemas](troubleshooting.html)
+
+---
+
+[← Volver al inicio](index.html)

@@ -389,6 +389,10 @@ ovandocode sessions stats <id>
 
 ## Siguiente paso
 
-- Volver a la [Guía completa](GUIA.md)
-- [Instalación](instalacion.md)
-- [Configuración](configuracion.md)
+- Volver a la [Guía completa](GUIA.html)
+- [Instalación](instalacion.html)
+- [Configuración](configuracion.html)
+
+---
+
+[← Volver al inicio](index.html)

@@ -8,25 +8,25 @@ Bienvenido a la documentación de OVANDOCODE. Esta guía cubre todo lo que neces
 
 ### Primeros pasos
 
-1. **[Instalación](instalacion.md)** — requisitos, `uv`, instalación global, primer arranque.
-2. **[Configuración](configuracion.md)** — `.env`, `config.toml`, keyring, todas las variables.
-3. **[Proveedores LLM](proveedores.md)** — los 10 proveedores soportados (Groq, OpenRouter, OpenAI, Anthropic, Gemini, DeepSeek, Mistral, xAI, Ollama, LM Studio).
+1. **[Instalación](instalacion.html)** — requisitos, `uv`, instalación global, primer arranque.
+2. **[Configuración](configuracion.html)** — `.env`, `config.toml`, keyring, todas las variables.
+3. **[Proveedores LLM](proveedores.html)** — los 10 proveedores soportados (Groq, OpenRouter, OpenAI, Anthropic, Gemini, DeepSeek, Mistral, xAI, Ollama, LM Studio).
 
 ### Uso
 
-4. **[Interfaz](interfaz.md)** — TUI interactiva + CLI (modo one-shot y headless).
-5. **[Herramientas](herramientas.md)** — las 10 tools built-in del agente.
-6. **[Sesiones](sesiones.md)** — historial persistente, reanudar, auto-compactación.
+4. **[Interfaz](interfaz.html)** — TUI interactiva + CLI (modo one-shot y headless).
+5. **[Herramientas](herramientas.html)** — las 10 tools built-in del agente.
+6. **[Sesiones](sesiones.html)** — historial persistente, reanudar, auto-compactación.
 
 ### Extender el agente
 
-7. **[Skills](skills.md)** — crear skills personalizadas con `SKILL.md`.
-8. **[MCP](mcp.md)** — conectar servidores MCP externos.
+7. **[Skills](skills.html)** — crear skills personalizadas con `SKILL.md`.
+8. **[MCP](mcp.html)** — conectar servidores MCP externos.
 
 ### Control y seguridad
 
-9. **[Permisos](permisos.md)** — modos de ejecución de comandos (allowlist, yolo, ask).
-10. **[Solución de problemas](troubleshooting.md)** — errores comunes y cómo resolverlos.
+9. **[Permisos](permisos.html)** — modos de ejecución de comandos (allowlist, yolo, ask).
+10. **[Solución de problemas](troubleshooting.html)** — errores comunes y cómo resolverlos.
 
 ---
 
@@ -121,14 +121,14 @@ if ($data.response -match "critico|error") { exit 1 }
 
 | Si quieres... | Ve a... |
 |---|---|
-| Instalarlo | [Instalación](instalacion.md) |
-| Configurar una API key | [Configuración](configuracion.md) |
-| Saber qué modelo elegir | [Proveedores](proveedores.md) |
-| Aprender a usarlo | [Interfaz](interfaz.md) |
-| Crear una skill | [Skills](skills.md) |
-| Conectar MCP | [MCP](mcp.md) |
-| Controlar qué ejecuta | [Permisos](permisos.md) |
-| Algo falla | [Troubleshooting](troubleshooting.md) |
+| Instalarlo | [Instalación](instalacion.html) |
+| Configurar una API key | [Configuración](configuracion.html) |
+| Saber qué modelo elegir | [Proveedores](proveedores.html) |
+| Aprender a usarlo | [Interfaz](interfaz.html) |
+| Crear una skill | [Skills](skills.html) |
+| Conectar MCP | [MCP](mcp.html) |
+| Controlar qué ejecuta | [Permisos](permisos.html) |
+| Algo falla | [Troubleshooting](troubleshooting.html) |
 
 ---
 
@@ -145,3 +145,7 @@ if ($data.response -match "critico|error") { exit 1 }
 ## Licencia
 
 MIT — ver [LICENSE](../LICENSE).
+
+---
+
+[← Volver al inicio](index.html)

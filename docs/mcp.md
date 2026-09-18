@@ -319,6 +319,10 @@ ovandocode mcp test mio
 
 ## Siguiente paso
 
-- [Interfaz](interfaz.md) — TUI y CLI
-- [Sesiones](sesiones.md) — historial y reanudar
-- [Solución de problemas](troubleshooting.md)
+- [Interfaz](interfaz.html) — TUI y CLI
+- [Sesiones](sesiones.html) — historial y reanudar
+- [Solución de problemas](troubleshooting.html)
+
+---
+
+[← Volver al inicio](index.html)

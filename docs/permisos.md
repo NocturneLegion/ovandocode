@@ -249,6 +249,10 @@ En una versión futura habrá un archivo de configuración para esto.
 
 ## Siguiente paso
 
-- [Herramientas](herramientas.md) — lista de tools
-- [Interfaz](interfaz.md) — uso de la TUI y CLI
-- [Solución de problemas](troubleshooting.md)
+- [Herramientas](herramientas.html) — lista de tools
+- [Interfaz](interfaz.html) — uso de la TUI y CLI
+- [Solución de problemas](troubleshooting.html)
+
+---
+
+[← Volver al inicio](index.html)

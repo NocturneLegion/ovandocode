@@ -292,6 +292,10 @@ Para forzar la recarga de `.env` después de editarlo: simplemente cierra y reab
 
 ## Siguiente paso
 
-- [Proveedores](proveedores.md) — configurar cada LLM
-- [Permisos](permisos.md) — modos de ejecución de comandos
-- [Solución de problemas](troubleshooting.md)
+- [Proveedores](proveedores.html) — configurar cada LLM
+- [Permisos](permisos.html) — modos de ejecución de comandos
+- [Solución de problemas](troubleshooting.html)
+
+---
+
+[← Volver al inicio](index.html)

@@ -316,6 +316,10 @@ uv tool install --force git+https://github.com/TU-USUARIO/ovandocode.git
 
 ## Siguiente paso
 
-- [Configuración](configuracion.md) — .env, config.toml, variables de entorno
-- [Proveedores](proveedores.md) — cada proveedor LLM en detalle
-- [Interfaz](interfaz.md) — TUI y CLI
+- [Configuración](configuracion.html) — .env, config.toml, variables de entorno
+- [Proveedores](proveedores.html) — cada proveedor LLM en detalle
+- [Interfaz](interfaz.html) — TUI y CLI
+
+---
+
+[← Volver al inicio](index.html)

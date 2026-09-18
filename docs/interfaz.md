@@ -282,5 +282,9 @@ ovandocode run "haz commit si todo pasa"
 
 ## Siguiente paso
 
-- [Sesiones](sesiones.md) — historial y reanudar
-- [Solución de problemas](troubleshooting.md)
+- [Sesiones](sesiones.html) — historial y reanudar
+- [Solución de problemas](troubleshooting.html)
+
+---
+
+[← Volver al inicio](index.html)

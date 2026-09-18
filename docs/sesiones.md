@@ -229,4 +229,8 @@ git add -f sessions/20260913-215249-3f5fd4.jsonl
 
 ## Siguiente paso
 
-- [Solución de problemas](troubleshooting.md)
+- [Solución de problemas](troubleshooting.html)
+
+---
+
+[← Volver al inicio](index.html)

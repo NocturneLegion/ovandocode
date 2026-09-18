@@ -159,7 +159,7 @@ Busca un patrón regex en el contenido de archivos. Respeta un `.gitignore` bás
 
 ## Shell
 
-⚠️ Todas las herramientas de shell pasan por la **política de permisos** (ver [permisos.md](permisos.md)).
+⚠️ Todas las herramientas de shell pasan por la **política de permisos** (ver [permisos.md](permisos.html)).
 
 ### `run_powershell`
 
@@ -226,7 +226,7 @@ Carga el contenido completo de una skill del catálogo. El agente la invoca cuan
 
 **Output**: frontmatter + cuerpo markdown de la skill.
 
-Ver [skills.md](skills.md) para más detalle.
+Ver [skills.md](skills.html) para más detalle.
 
 ---
 
@@ -310,12 +310,16 @@ Ejemplo: si tienes un servidor MCP llamado `github`, sus tools aparecen como:
 - `mcp__github__list_repos`
 - `mcp__github__create_issue`
 
-Ver [mcp.md](mcp.md) para más detalle.
+Ver [mcp.md](mcp.html) para más detalle.
 
 ---
 
 ## Siguiente paso
 
-- [Skills](skills.md) — crear skills personalizadas
-- [MCP](mcp.md) — servidores MCP externos
-- [Interfaz](interfaz.md) — uso de TUI y CLI
+- [Skills](skills.html) — crear skills personalizadas
+- [MCP](mcp.html) — servidores MCP externos
+- [Interfaz](interfaz.html) — uso de TUI y CLI
+
+---
+
+[← Volver al inicio](index.html)

@@ -324,6 +324,10 @@ Errores comunes:
 
 ## Siguiente paso
 
-- [MCP](mcp.md) — servidores MCP externos
-- [Interfaz](interfaz.md) — TUI y CLI
-- [Solución de problemas](troubleshooting.md)
+- [MCP](mcp.html) — servidores MCP externos
+- [Interfaz](interfaz.html) — TUI y CLI
+- [Solución de problemas](troubleshooting.html)
+
+---
+
+[← Volver al inicio](index.html)
