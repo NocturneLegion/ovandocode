@@ -3,7 +3,7 @@
 OVANDOCODE se configura en **3 niveles**, en orden de prioridad (mayor gana):
 
 1. **Variables de entorno del sistema** (`.env` + variables reales del SO)
-2. **Archivo `config.toml`** en `%APPDATA%\OvandoCode\`
+2. **Archivo `config.toml`** en `%APPDATA%\OvandoCode`
 3. **Valores por defecto** en `src/ovandocode/config/settings.py`
 
 Las credenciales (API keys) tienen su propia cascada:
