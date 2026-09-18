@@ -1,0 +1,7 @@
+theme: jekyll-theme-cayman
+title: OVANDOCODE
+description: Agente de codificación autónomo para terminal
+show_downloads: false
+github:
+  repository_url: https://github.com/NocturneLegion/ovandocode
+  repository_name: ovandocode
