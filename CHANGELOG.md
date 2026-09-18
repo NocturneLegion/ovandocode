@@ -4,6 +4,35 @@ Todas las versiones notables de OVANDOCODE.
 
 El formato sigue Keep a Changelog y este proyecto usa Semantic Versioning.
 
+## [0.3.0] - 2026-09-18
+
+Features de copiado y mejoras de la TUI.
+
+### Anadido
+
+- **Multiples formas de copiar desde la TUI**:
+  - `/copy` para todo el chat, `/copy-last` para la ultima respuesta,
+    `/copy-code` para el ultimo bloque de codigo.
+  - Atajos `Ctrl+Y` y `F2` (ademas de `Ctrl+Shift+C`).
+  - Fallback a OSC 52 si la terminal no soporta `copy_to_clipboard`.
+  - Fallback final a archivo temporal si nada funciona.
+- **Comandos `/open-*` para abrir contenido en el editor del SO**:
+  - `/open-chat`, `/open-last`, `/open-code`.
+  - Soluciona la dificultad de seleccionar con el mouse en la TUI.
+- **Redibujado automatico del historial** al reanudar una sesion.
+- **Comando `/history`** para redibujar bajo demanda.
+- **Nota de Shift+mouse** en `/help`.
+
+### Corregido
+
+- Respuesta del agente no se incluia en el buffer de copia porque
+  `_ev_assistant_text` escribia directo al RichLog en vez de usar
+  `_write_log`.
+
+### Cambiado
+
+- `_write_log` unifica escritura a pantalla y buffer de copia.
+
 ## [0.2.1] - 2026-09-18
 
 Version de mantenimiento. Corrige el bug critico de reanudado de sesiones.
@@ -95,3 +124,5 @@ Primera version funcional. Agente de codificacion autonomo para terminal.
 [0.2.0]: https://github.com/NocturneLegion/ovandocode/releases/tag/v0.2.0
 
 [0.2.1]: https://github.com/NocturneLegion/ovandocode/releases/tag/v0.2.1
+
+[0.3.0]: https://github.com/NocturneLegion/ovandocode/releases/tag/v0.3.0

@@ -38,12 +38,27 @@ HELP_TEXT = """[bold]Comandos disponibles[/]
   /mcp               Estado de los servidores MCP
   /tools             Lista herramientas activas
 
+[bold]Copiar contenido[/]
+  /copy              Copia todo el chat al portapapeles
+  /copy-last         Copia la ultima respuesta del agente
+  /copy-code         Copia el ultimo bloque de codigo
+  /open-chat         Abre todo el chat en Notepad
+  /open-last         Abre la ultima respuesta en Notepad
+  /open-code         Abre el ultimo codigo en Notepad
+
 [bold]Atajos[/]
-  Ctrl+Shift+C       Copiar todo el chat al portapapeles
-  Ctrl+Shift+V       Pegar en el input
-  Ctrl+L             Limpiar chat
-  Ctrl+N             Nueva sesion
-  Ctrl+C             Salir
+  Ctrl+Shift+C o Ctrl+Y o F2   Copiar todo el chat
+  Ctrl+Shift+V                  Pegar en el input
+  Ctrl+L                        Limpiar chat
+  Ctrl+N                        Nueva sesion
+  Ctrl+C                        Salir
+
+[bold]Tip: seleccionar con el mouse[/]
+  Manten Shift + arrastra el mouse = seleccion nativa del terminal
+  (Luego Ctrl+Shift+C para copiar la seleccion)
+
+  Si no funciona, usa /open-chat que abre el contenido en Notepad
+  (o el editor por defecto) donde el mouse si funciona normalmente.
 """
 
 
@@ -57,7 +72,9 @@ class OvandoCodeApp(App):
         Binding("ctrl+c", "quit", "Salir", priority=True),
         Binding("ctrl+l", "clear_chat", "Limpiar"),
         Binding("ctrl+n", "new_session", "Nueva sesion"),
-        Binding("ctrl+shift+c", "copy_chat", "Copiar chat", show=True),
+        Binding("ctrl+shift+c", "copy_chat", "Copiar chat", show=False),
+        Binding("ctrl+y", "copy_chat", "Copiar chat", show=True),
+        Binding("f2", "copy_chat", "Copiar chat", show=True),
         Binding("ctrl+shift+v", "paste_input", "Pegar", show=True),
     ]
 
@@ -69,6 +86,8 @@ class OvandoCodeApp(App):
         self.store = SessionStore(sessions_dir())
         self._project_root: str = str(pathlib.Path.cwd().resolve())
         self._chat_buffer: list[str] = []  # buffer de texto plano para copiar
+        self._last_assistant: str = ""     # ultima respuesta completa del agente
+        self._last_code_block: str = ""    # ultimo bloque de codigo extraido
 
     def compose(self) -> ComposeResult:
         yield Header(show_clock=True)
@@ -143,9 +162,16 @@ class OvandoCodeApp(App):
         self._chat_buffer.append(plain)
 
     def _ev_assistant_text(self, text: str) -> None:
-        log = self._log()
-        log.write(f"[bold cyan]Agent:[/] {text}")
-        log.write("")
+        # Usar _write_log para que tambien se guarde en el buffer de copia
+        self._write_log(f"[bold cyan]Agent:[/] {text}")
+        self._write_log("")
+        # Guardar para /copy-last
+        self._last_assistant = text
+        # Extraer bloque de codigo si lo hay
+        import re as _re
+        blocks = _re.findall(r"```[a-zA-Z0-9_+-]*\n(.*?)```", text, _re.DOTALL)
+        if blocks:
+            self._last_code_block = blocks[-1].rstrip()
 
     def _ev_tool_call(self, name: str, args: dict) -> None:
         preview = str(args)
@@ -233,6 +259,18 @@ class OvandoCodeApp(App):
                 await self._pick_provider()
         elif cmd == "history":
             self._redraw_history()
+        elif cmd in ("copy", "copiar"):
+            self.action_copy_chat()
+        elif cmd in ("copy-last", "copiar-ultimo", "cl"):
+            self._copy_last_assistant()
+        elif cmd in ("copy-code", "copiar-codigo", "cc"):
+            self._copy_last_code_block()
+        elif cmd in ("open-chat", "abrir-chat", "oc"):
+            self._open_in_editor("\n".join(self._chat_buffer), "chat completo")
+        elif cmd in ("open-last", "abrir-ultimo", "ol"):
+            self._open_in_editor(self._last_assistant, "ultima respuesta")
+        elif cmd in ("open-code", "abrir-codigo"):
+            self._open_in_editor(self._last_code_block, "ultimo bloque de codigo")
         elif cmd == "skills":
             loader = SkillLoader(project_root=self.agent.tools.project_root if self.agent else None)
             skills = loader.all()
@@ -269,14 +307,101 @@ class OvandoCodeApp(App):
             self.notify("El chat esta vacio", timeout=2)
             return
         text = "\n".join(self._chat_buffer)
+        self._do_copy(text, f"Chat copiado ({len(self._chat_buffer)} lineas)")
+
+    def _open_in_editor(self, content: str, label: str = "contenido") -> None:
+        """Escribe el contenido a un archivo temporal y lo abre con el editor del SO."""
+        import os
+        import pathlib
+        import subprocess
+        import sys
+        import tempfile
+
+        if not content:
+            self.notify(f"No hay {label} para abrir", timeout=2)
+            return
+
         try:
-            self.copy_to_clipboard(text)
+            tmp_dir = pathlib.Path(tempfile.gettempdir())
+            tmp_file = tmp_dir / "ovandocode_copy.txt"
+            tmp_file.write_text(content, encoding="utf-8")
+        except Exception as e:
+            self.notify(f"Error escribiendo archivo: {e}", severity="error")
+            return
+
+        try:
+            if sys.platform == "win32":
+                os.startfile(str(tmp_file))
+            elif sys.platform == "darwin":
+                subprocess.Popen(["open", str(tmp_file)])
+            else:
+                subprocess.Popen(["xdg-open", str(tmp_file)])
+
             self.notify(
-                f"Copiado al portapapeles ({len(self._chat_buffer)} lineas)",
-                timeout=2,
+                f"{label.capitalize()} abierto en el editor. "
+                f"Usa el mouse ahi para seleccionar y copiar.",
+                timeout=6,
             )
         except Exception as e:
-            self.notify(f"No se pudo copiar: {e}", severity="error")
+            self.notify(
+                f"No se pudo abrir el editor: {e}. Archivo en: {tmp_file}",
+                severity="warning",
+                timeout=10,
+            )
+
+    def _do_copy(self, text: str, success_msg: str) -> None:
+        """Copia al portapapeles con multiples metodos de fallback."""
+        # Metodo 1: Textual API (usa OSC 52 en terminales compatibles)
+        try:
+            self.copy_to_clipboard(text)
+            self.notify(success_msg, timeout=3)
+            return
+        except Exception as e:
+            pass
+
+        # Metodo 2: OSC 52 directo via escape sequence (funciona en muchas terminales)
+        try:
+            import base64
+            b64 = base64.b64encode(text.encode("utf-8")).decode("ascii")
+            osc52 = f"\033]52;c;{b64}\007"
+            print(osc52, end="", flush=True)
+            self.notify(success_msg, timeout=3)
+            return
+        except Exception:
+            pass
+
+        # Metodo 3: Fallback a archivo temporal + notificar
+        try:
+            import pathlib
+            tmp = pathlib.Path.home() / ".ovandocode_last_copy.txt"
+            tmp.write_text(text, encoding="utf-8")
+            self.notify(
+                f"No se pudo usar el portapapeles. Guardado en: {tmp}",
+                severity="warning",
+                timeout=10,
+            )
+        except Exception as e:
+            self.notify(f"Error copiando: {e}", severity="error")
+
+    def _copy_last_assistant(self) -> None:
+        """Copia solo la ultima respuesta completa del agente."""
+        if not self._last_assistant:
+            self.notify("Aun no hay respuesta del agente", timeout=2)
+            return
+        self._do_copy(
+            self._last_assistant,
+            f"Ultima respuesta copiada ({len(self._last_assistant)} chars)",
+        )
+
+    def _copy_last_code_block(self) -> None:
+        """Copia el ultimo bloque de codigo del agente."""
+        if not self._last_code_block:
+            self.notify("No hay bloque de codigo reciente", timeout=2)
+            return
+        self._do_copy(
+            self._last_code_block,
+            f"Codigo copiado ({len(self._last_code_block)} chars)",
+        )
 
     async def action_paste_input(self) -> None:
         """Pega el contenido del portapapeles en el input."""
