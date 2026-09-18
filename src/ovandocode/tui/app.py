@@ -31,6 +31,7 @@ HELP_TEXT = """[bold]Comandos disponibles[/]
   /quit              Salir
   /clear             Nueva sesion (limpia el chat)
   /session           Info de la sesion actual
+  /history           Redibuja el historial en el chat
   /model [nombre]    Abre selector de modelos (o directo si pasas nombre)
   /provider [nombre] Abre selector de proveedores (o directo si pasas nombre)
   /skills            Lista skills disponibles
@@ -88,10 +89,21 @@ class OvandoCodeApp(App):
         log.write("[dim]Escribe /help para ver comandos.[/]")
         log.write("")
 
-        self.session = self.store.new(
-            provider=self.agent_config.provider,
-            model=self.agent_config.model,
-        )
+        # Si NO hay sesion precargada (via sessions resume), crear una nueva.
+        # Si ya hay una (precargada desde el CLI), respetarla y sincronizar
+        # el provider/model del agent_config con los de la sesion.
+        if self.session is None:
+            self.session = self.store.new(
+                provider=self.agent_config.provider,
+                model=self.agent_config.model,
+            )
+        else:
+            self.agent_config.provider = (
+                self.session.provider or self.agent_config.provider
+            )
+            self.agent_config.model = (
+                self.session.model or self.agent_config.model
+            )
 
         events = AgentEvents(
             on_assistant_text=self._ev_assistant_text,
@@ -108,6 +120,10 @@ class OvandoCodeApp(App):
             store=self.store,
         )
         await self.agent.__aenter__()
+
+        # Si la sesion fue reanudada, redibujar historial
+        if self.session.messages:
+            self._redraw_history()
         self._update_status()
         self.query_one("#input", Input).focus()
 
@@ -215,6 +231,8 @@ class OvandoCodeApp(App):
                 await self._change_provider(arg)
             else:
                 await self._pick_provider()
+        elif cmd == "history":
+            self._redraw_history()
         elif cmd == "skills":
             loader = SkillLoader(project_root=self.agent.tools.project_root if self.agent else None)
             skills = loader.all()
@@ -485,6 +503,48 @@ class OvandoCodeApp(App):
         saved_provider = result.get("provider")
         if then_switch and saved_provider:
             await self._change_provider(saved_provider)
+
+    def _redraw_history(self) -> None:
+        """Redibuja el historial de la sesion en el chat."""
+        if not self.session or not self.session.messages:
+            return
+
+        log = self._log()
+        log.write("[dim]--- historial de la sesion reanudada ---[/]")
+        log.write("")
+
+        for msg in self.session.messages:
+            role = msg.role
+            content = msg.content or ""
+
+            if role == "system":
+                continue
+
+            if role == "user":
+                self._write_log(f"[bold green]Tu:[/] {content}")
+                self._write_log("")
+
+            elif role == "assistant":
+                if msg.tool_calls:
+                    for tc in msg.tool_calls:
+                        preview = str(tc.arguments)
+                        if len(preview) > 100:
+                            preview = preview[:100] + "..."
+                        self._write_log(f"[dim]  >> {tc.name} {preview}[/]")
+                if content.strip():
+                    self._write_log(f"[bold cyan]Agent:[/] {content}")
+                    self._write_log("")
+
+            elif role == "tool":
+                preview = content.replace("\n", " ")
+                if len(preview) > 200:
+                    preview = preview[:200] + "..."
+                name = msg.name or "tool"
+                self._write_log(f"[dim]  << {name}: {preview}[/]")
+
+        log.write("")
+        log.write("[dim]--- fin del historial ---[/]")
+        log.write("")
 
     def _update_status(self) -> None:
         if self.session is None:
