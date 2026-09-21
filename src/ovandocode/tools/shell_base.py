@@ -21,6 +21,11 @@ class ShellTool(BaseTool):
         command = kwargs.get("command")
         if not command:
             raise ToolError("Parametro 'command' obligatorio.")
+        if not self.shell_exe:
+            raise ToolError(
+                f"{self.name}: shell no disponible en este sistema. "
+                f"En Windows usa 'run_powershell' en su lugar."
+            )
 
         timeout = int(kwargs.get("timeout", self.timeout_default))
         timeout = max(1, min(timeout, self.timeout_max))
