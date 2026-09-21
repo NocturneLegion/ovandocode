@@ -87,18 +87,22 @@ class Settings(BaseSettings):
         file_secret_settings,
     ):
         """Orden de prioridad (mayor gana):
-            1. init_settings (argumentos directos)
-            2. env_settings (variables OVANDOCODE_* del SO)
-            3. dotenv_settings (.env del proyecto)
-            4. toml_defaults (config.toml global)
+            1. init_settings (argumentos directos del CLI)
+            2. toml_defaults (config.toml global: fuente de verdad del usuario)
+            3. env_settings (variables OVANDOCODE_* del SO)
+            4. dotenv_settings (.env del proyecto, solo secretos de desarrollo)
             5. defaults del codigo
+
+        El config.toml global GANA sobre .env y variables de entorno para que la
+        configuracion elegida por el usuario en la TUI se respete siempre,
+        sin importar el proyecto o carpeta desde donde se ejecute.
         """
         toml_source = TomlDefaultsSource(settings_cls, config_file())
         return (
             init_settings,
+            toml_source,
             env_settings,
             dotenv_settings,
-            toml_source,
             file_secret_settings,
         )
 
