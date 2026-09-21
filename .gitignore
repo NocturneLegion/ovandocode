@@ -57,3 +57,21 @@ _*.ps1
 *.ps1
 !install.ps1
 
+
+# ============================================================
+# Outputs de prueba de skills (no forman parte del producto)
+# ============================================================
+demo-*.html
+demo-*.json
+test-*.html
+test-*.json
+
+# Skills: excluir tests de desarrollo de las skills instaladas
+# (los tests no son necesarios para ejecutar la skill)
+skills/*/test/
+
+# ============================================================
+# Backups y archivos de desarrollo
+# ============================================================
+*.bak
+*.bak2
