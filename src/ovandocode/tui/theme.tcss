@@ -125,10 +125,16 @@ Screen {
     color: $text-muted;
 }
 
-.prov-active {
+.prov-selected {
+    background: $primary-darken-2;
+    color: $text;
     text-style: bold;
-    background: $boost;
 }
+
+.prov-active {
+      text-style: bold;
+      color: $accent;
+  }
 
 #prov-buttons {
     align: center middle;
